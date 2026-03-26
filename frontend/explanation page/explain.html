@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Question Explanation Workspace</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="explain.css">
+</head>
+<body>
+	<button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light theme">🌙</button>
+	<section class="floating-chat-widget" id="floatingChatWidget" aria-label="Doubt chat">
+		<button class="floating-chat-icon" id="floatingChatIcon" type="button" aria-label="Open doubt chat" aria-expanded="false">💬</button>
+		<div class="floating-chat-panel" id="floatingChatPanel" role="dialog" aria-hidden="true" aria-label="Doubt assistant chat">
+			<header class="floating-chat-header">
+				<div class="floating-chat-bot">
+					<span class="floating-chat-avatar" aria-hidden="true">AI</span>
+					<div>
+						<h3>Doubt Assistant</h3>
+						<p>Ask anything from this explanation</p>
+					</div>
+				</div>
+				<button class="floating-chat-close" id="floatingChatClose" type="button" aria-label="Close doubt chat">✕</button>
+			</header>
+
+			<div class="floating-chat-messages" id="floatingChatMessages">
+				<article class="floating-chat-message bot">
+					<p>Hello! I can help with your current graph question.</p>
+				</article>
+			</div>
+
+			<div class="floating-chat-typing" id="floatingChatTyping" hidden>
+				<span class="dot"></span>
+				<span class="dot"></span>
+				<span class="dot"></span>
+				<p>Bot is typing...</p>
+			</div>
+
+			<form class="floating-chat-input" id="floatingChatForm">
+				<label class="sr-only" for="floatingChatInput">Type your doubt</label>
+				<input id="floatingChatInput" type="text" placeholder="Type your doubt..." maxlength="400" autocomplete="off">
+				<button type="submit">Send</button>
+			</form>
+		</div>
+	</section>
+	<main class="page-shell">
+		<section class="question-zone card" aria-label="Question area">
+			<div class="question-header">
+				<p class="eyebrow">Current Question</p>
+				<h1 id="activeQuestion">Find the equation of a line passing through (2,3) with slope 4.</h1>
+			</div>
+
+			<div class="history-wrap">
+				<p class="history-title">Recent Questions</p>
+				<ul class="question-history" id="questionHistory">
+					<li>
+						<button class="history-item is-active" type="button" data-question="Find the equation of a line passing through (2,3) with slope 4.">
+							Line equation with given slope and point
+						</button>
+					</li>
+					<li>
+						<button class="history-item" type="button" data-question="What is the vertex and axis of symmetry for y = x^2 - 6x + 5?">
+							Vertex form and axis of symmetry
+						</button>
+					</li>
+					<li>
+						<button class="history-item" type="button" data-question="Determine where the graph y = 2x + 1 intersects y = -x + 7.">
+							Graph intersection of two linear equations
+						</button>
+					</li>
+				</ul>
+			</div>
+		</section>
+
+		<section class="workspace-grid" aria-label="Graph and explanation area">
+			<article class="graph-panel card">
+				<div class="panel-title-row">
+					<h2>Interactive Graph Area</h2>
+					<span class="chip">Expanded View</span>
+				</div>
+				<div class="graph-placeholder" role="img" aria-label="Graph placeholder">
+					<div class="grid-overlay"></div>
+					<div class="axis axis-x"></div>
+					<div class="axis axis-y"></div>
+					<div class="point point-a" title="A(2,3)"></div>
+					<div class="point point-b" title="B(4,11)"></div>
+					<p>Graph visualization placeholder</p>
+				</div>
+			</article>
+
+			<article class="explanation-panel card">
+				<div class="panel-title-row">
+					<h2>Detailed Explanation</h2>
+					<span class="chip">Step by Step</span>
+				</div>
+
+				<div class="explain-content" id="explainContent">
+					<h3>Given Information</h3>
+					<p>We are given one point on the line: <strong>(2,3)</strong> and slope <strong>m = 4</strong>.</p>
+
+					<h3>Apply Point-Slope Form</h3>
+					<p>Use the equation:</p>
+					<p class="formula">y - y₁ = m(x - x₁)</p>
+					<p>Substitute values:</p>
+					<p class="formula">y - 3 = 4(x - 2)</p>
+
+					<h3>Simplify</h3>
+					<p>Expand and rearrange:</p>
+					<p class="formula">y - 3 = 4x - 8</p>
+					<p class="formula">y = 4x - 5</p>
+
+					<h3>Final Answer</h3>
+					<p>The required line equation is <strong>y = 4x - 5</strong>.</p>
+				</div>
+			</article>
+		</section>
+
+		<section class="video-section card" aria-label="Related explanation video">
+			<div class="panel-title-row">
+				<h2>Related Explanation Video</h2>
+				<span class="chip">Recommended</span>
+			</div>
+
+			<div class="video-frame">
+				<iframe
+					src="https://www.youtube.com/embed/2CQ4J7M6u4E"
+					title="Linear equations explanation"
+					allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+					allowfullscreen>
+				</iframe>
+			</div>
+		</section>
+
+		<section class="future-zone card" aria-label="Future extension section">
+			<h2>Future Workspace</h2>
+			<p>
+				Reserved for notes, AI suggestions, hints, comments, and collaborative discussion modules.
+			</p>
+		</section>
+	</main>
+
+	<script src="explain.js"></script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Upload Studio</title>
+	<link rel="stylesheet" href="homepage.css">
+</head>
+<body>
+	<button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light theme">🌙</button>
+	<main class="page">
+		<section class="hero" aria-label="Image upload area">
+			<h1>AI GRAPH QUESTION SOLVER</h1>
+			<p class="subtitle">
+				Drag and drop graph-related math question image, or click to browse your files.
+			</p>
+
+			<div class="upload-card" id="dropZone">
+				<div class="preview-wrap" id="previewWrap">
+					<img id="previewImage" alt="Uploaded preview" />
+					<div class="preview-placeholder" id="previewPlaceholder">
+						<span class="placeholder-icon">+</span>
+						<button class="drop-prompt-button" type="button">Drop an image here</button>
+						<small>PNG, JPG, WEBP</small>
+					</div>
+				</div>
+				<button class="upload-button" id="uploadButton" type="button" disabled>Upload the image</button>
+				<input id="imageUpload" type="file" accept="image/*" multiple>
+			</div>
+		</section>
+	</main>
+
+	<script src="homepage.js"></script>
+</body>
+</html>
