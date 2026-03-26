@@ -34,6 +34,11 @@
 	--drop-button-bg: linear-gradient(135deg, rgba(125, 211, 252, 0.26), rgba(124, 58, 237, 0.22));
 	--drop-button-border: rgba(125, 211, 252, 0.45);
 	--drop-button-hover-shadow: 0 10px 24px rgba(2, 6, 23, 0.24);
+	--math-stroke-a: rgba(125, 211, 252, 0.62);
+	--math-stroke-b: rgba(124, 58, 237, 0.54);
+	--math-stroke-c: rgba(45, 212, 191, 0.46);
+	--math-text: rgba(226, 232, 240, 0.3);
+	--math-glow: drop-shadow(0 0 16px rgba(125, 211, 252, 0.38));
 }
 
 body.light-theme {
@@ -68,6 +73,11 @@ body.light-theme {
 	--drop-button-bg: linear-gradient(135deg, rgba(37, 99, 235, 0.18), rgba(14, 165, 233, 0.2));
 	--drop-button-border: rgba(37, 99, 235, 0.45);
 	--drop-button-hover-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
+	--math-stroke-a: rgba(37, 99, 235, 0.56);
+	--math-stroke-b: rgba(14, 165, 233, 0.52);
+	--math-stroke-c: rgba(99, 102, 241, 0.44);
+	--math-text: rgba(15, 23, 42, 0.3);
+	--math-glow: drop-shadow(0 0 14px rgba(37, 99, 235, 0.3));
 }
 
 html, body {
@@ -84,6 +94,63 @@ body {
 		radial-gradient(circle at 50% 80%, var(--bg-orb-3), transparent 30%),
 		linear-gradient(160deg, var(--bg-1), var(--bg-2));
 	overflow: hidden;
+}
+
+.math-background {
+	position: fixed;
+	inset: -10vh -10vw;
+	pointer-events: none;
+	overflow: hidden;
+	z-index: 0;
+	transform: translateZ(0);
+	will-change: transform;
+	filter: saturate(1.05);
+}
+
+.math-float {
+	position: absolute;
+	left: 0;
+	top: 0;
+	transform: translate3d(calc(var(--x) + var(--px, 0px)), calc(var(--y) + var(--py, 0px)), 0) rotate(var(--r));
+	animation-name: driftXY;
+	animation-timing-function: ease-in-out;
+	animation-iteration-count: infinite;
+	animation-duration: var(--dur);
+	animation-delay: var(--delay);
+	opacity: var(--alpha, 0.4);
+	filter: blur(var(--blur, 0.2px));
+	will-change: transform, opacity;
+	z-index: -1;
+	transition: transform 240ms ease-out;
+}
+
+.math-float svg {
+	display: block;
+	width: 100%;
+	height: 100%;
+	filter: var(--math-glow);
+}
+
+.math-float path,
+.math-float line,
+.math-float polyline,
+.math-float circle {
+	stroke-width: 1.9;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	fill: none;
+}
+
+.math-float .math-a {
+	stroke: var(--math-stroke-a);
+}
+
+.math-float .math-b {
+	stroke: var(--math-stroke-b);
+}
+
+.math-float .math-c {
+	stroke: var(--math-stroke-c);
 }
 
 body::before {
@@ -134,6 +201,8 @@ body::before {
 	display: grid;
 	place-items: center;
 	padding: 24px;
+	position: relative;
+	z-index: 2;
 }
 
 .hero {
@@ -388,6 +457,27 @@ body::before {
 	}
 }
 
+@keyframes driftXY {
+	0% {
+		transform: translate3d(calc(var(--x) + var(--px, 0px)), calc(var(--y) + var(--py, 0px)), 0) rotate(var(--r));
+		opacity: calc(var(--alpha, 0.28) * 0.85);
+	}
+	50% {
+		transform: translate3d(calc(var(--x) + var(--px, 0px) + var(--mx, 32px)), calc(var(--y) + var(--py, 0px) + var(--my, -44px)), 0) rotate(calc(var(--r) + var(--rr, 4deg)));
+		opacity: var(--alpha, 0.28);
+	}
+	100% {
+		transform: translate3d(calc(var(--x) + var(--px, 0px)), calc(var(--y) + var(--py, 0px)), 0) rotate(var(--r));
+		opacity: calc(var(--alpha, 0.28) * 0.85);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.math-float {
+		animation: none;
+	}
+}
+
 @media (max-width: 640px) {
 	.page {
 		padding: 16px;
@@ -435,5 +525,9 @@ body::before {
 
 	.hero {
 		min-height: auto;
+	}
+
+	.math-background {
+		inset: -6vh -8vw;
 	}
 }
