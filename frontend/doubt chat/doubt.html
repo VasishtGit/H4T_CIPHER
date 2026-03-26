@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Doubt Chat Widget</title>
+	<link rel="stylesheet" href="doubt.css">
+</head>
+<body>
+	<a class="back-link" href="../explanation page/explain.html" aria-label="Back to explanation page">← Back to explanation</a>
+
+	<section class="chat-widget" id="chatWidget" aria-label="Support chatbot">
+		<button class="chat-toggle" id="chatToggle" type="button" aria-label="Open chat" aria-expanded="false">
+			<span class="chat-toggle-icon">💬</span>
+		</button>
+
+		<div class="chat-panel" id="chatPanel" role="dialog" aria-modal="false" aria-hidden="true" aria-label="Doubt assistant chat">
+			<header class="chat-header">
+				<div class="bot-meta">
+					<div class="bot-avatar" aria-hidden="true">AI</div>
+					<div>
+						<h2>Doubt Assistant</h2>
+						<p>Usually replies in a few seconds</p>
+					</div>
+				</div>
+				<button class="chat-close" id="chatClose" type="button" aria-label="Minimize chat">✕</button>
+			</header>
+
+			<div class="chat-messages" id="chatMessages">
+				<article class="message bot">
+					<p>Hello! Ask me your learning doubt and I will help.</p>
+				</article>
+			</div>
+
+			<div class="typing" id="typingIndicator" aria-live="polite" hidden>
+				<span class="typing-dot"></span>
+				<span class="typing-dot"></span>
+				<span class="typing-dot"></span>
+				<p>Bot is typing...</p>
+			</div>
+
+			<form class="chat-input-wrap" id="chatForm">
+				<label class="sr-only" for="chatInput">Type your message</label>
+				<input id="chatInput" type="text" placeholder="Type your doubt..." autocomplete="off" maxlength="500">
+				<button class="send-btn" type="submit">Send</button>
+			</form>
+		</div>
+	</section>
+
+	<script src="doubt.js"></script>
+</body>
+</html>
