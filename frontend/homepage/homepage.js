@@ -2,6 +2,7 @@ const dropZone = document.getElementById('dropZone');
 const imageUpload = document.getElementById('imageUpload');
 const previewImage = document.getElementById('previewImage');
 const previewPlaceholder = document.getElementById('previewPlaceholder');
+const dropPromptButton = document.querySelector('.drop-prompt-button');
 const uploadButton = document.getElementById('uploadButton');
 const themeToggle = document.getElementById('themeToggle');
 const statusLine = document.querySelector('.status-line') || (() => {
@@ -12,6 +13,10 @@ const statusLine = document.querySelector('.status-line') || (() => {
 })();
 
 let selectedFiles = [];
+
+function syncUploadButton() {
+	uploadButton.disabled = selectedFiles.length === 0;
+}
 
 function updateThemeButtonLabel() {
 	const isLight = document.body.classList.contains('light-theme');
@@ -29,34 +34,32 @@ function applySavedTheme() {
 	updateThemeButtonLabel();
 }
 
-function syncButtons() {
-	const hasFile = selectedFiles.length > 0;
-	uploadButton.disabled = !hasFile;
-}
-
 function showPreview(file) {
 	if (!file) {
-		selectedFiles = [];
 		previewImage.removeAttribute('src');
 		previewImage.style.display = 'none';
 		previewPlaceholder.style.display = 'grid';
-		syncButtons();
 		return;
 	}
 
-	selectedFiles = [file];
 	const reader = new FileReader();
 	reader.onload = () => {
 		previewImage.src = reader.result;
 		previewImage.style.display = 'block';
 		previewPlaceholder.style.display = 'none';
-		syncButtons();
 	};
 	reader.readAsDataURL(file);
 }
 
+function setSelectedFiles(files) {
+	selectedFiles = files;
+	showPreview(files[0] || null);
+	syncUploadButton();
+}
+
 imageUpload.addEventListener('change', () => {
-	showPreview(imageUpload.files[0]);
+	const files = Array.from(imageUpload.files || []).filter((item) => item.type.startsWith('image/'));
+	setSelectedFiles(files);
 });
 
 ['dragenter', 'dragover'].forEach((eventName) => {
@@ -70,30 +73,46 @@ imageUpload.addEventListener('change', () => {
 	dropZone.addEventListener(eventName, (event) => {
 		event.preventDefault();
 		if (eventName === 'drop') {
-			const file = Array.from(event.dataTransfer.files || []).find((item) => item.type.startsWith('image/'));
-			if (file) {
+			const files = Array.from(event.dataTransfer.files || []).filter((item) => item.type.startsWith('image/'));
+			if (files.length) {
 				const dataTransfer = new DataTransfer();
-				dataTransfer.items.add(file);
+				files.forEach((file) => dataTransfer.items.add(file));
 				imageUpload.files = dataTransfer.files;
-				showPreview(file);
+				setSelectedFiles(files);
 			}
 		}
 		dropZone.classList.remove('is-active');
 	});
 });
 
-dropZone.addEventListener('click', (event) => {
-	if (event.target !== imageUpload) {
-		imageUpload.click();
-	}
+dropPromptButton.addEventListener('click', (event) => {
+	event.preventDefault();
+	imageUpload.click();
 });
 
-uploadButton.addEventListener('click', () => {
+uploadButton.addEventListener('click', async () => {
 	if (!selectedFiles.length) {
 		return;
 	}
 
-	statusLine.textContent = `Ready to upload ${selectedFiles.length} selected image${selectedFiles.length > 1 ? 's' : ''}.`;
+	const formData = new FormData();
+	selectedFiles.forEach((file) => formData.append('images', file));
+	statusLine.textContent = `Uploading ${selectedFiles.length} image${selectedFiles.length > 1 ? 's' : ''}...`;
+
+	try {
+		const response = await fetch('/upload', {
+			method: 'POST',
+			body: formData,
+		});
+
+		if (!response.ok) {
+			throw new Error('Upload failed');
+		}
+
+		statusLine.textContent = 'Image upload successful.';
+	} catch (error) {
+		statusLine.textContent = 'Upload endpoint is not available yet.';
+	}
 });
 
 themeToggle.addEventListener('click', () => {
@@ -103,5 +122,4 @@ themeToggle.addEventListener('click', () => {
 });
 
 applySavedTheme();
-
-syncButtons();
+syncUploadButton();
