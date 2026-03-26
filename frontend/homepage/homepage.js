@@ -6,12 +6,42 @@ const dropPromptButton = document.querySelector('.drop-prompt-button');
 const uploadButton = document.getElementById('uploadButton');
 const themeToggle = document.getElementById('themeToggle');
 const mathBackground = document.getElementById('mathBackground');
+const API_BASE_URL = 'http://localhost:8000';
 const statusLine = document.querySelector('.status-line') || (() => {
 	const element = document.createElement('div');
 	element.className = 'status-line';
 	dropZone.insertAdjacentElement('afterend', element);
 	return element;
 })();
+
+const solutionCard = document.getElementById('solutionCard');
+const manualEquationInput = document.getElementById('manualEquation');
+const manualSolveButton = document.getElementById('manualSolveButton');
+
+function renderResult(s) {
+	if (!s) {
+		solutionCard.textContent = 'No result available';
+		return;
+	}
+
+	const equationText = s.equation || 'Could not identify a specific linear equation';
+	const rawText = s.raw_result || s.equation || 'N/A';
+	const sourceText = s.equation_source || 'unknown';
+
+	solutionCard.innerHTML = `
+		<h2>Solution</h2>
+		<p><strong>Equation source:</strong> ${sourceText}</p>
+		<p><strong>Equation:</strong> ${equationText}</p>
+		<p><strong>Slope (m):</strong> ${s.slope ?? 'N/A'}</p>
+		<p><strong>Y-intercept:</strong> ${s.y_intercept ?? 'N/A'}</p>
+		<p><strong>X-intercept:</strong> ${s.x_intercept ?? 'N/A'}</p>
+		<p><strong>AI raw text:</strong> ${rawText ? `<code>${rawText}</code>` : 'N/A'}</p>
+		<p><strong>OCR text:</strong> ${(s.ocr_text || 'N/A').replace(/\n/g, ' ' )}</p>
+		<details><summary>Steps</summary>
+			<ol>${(s.steps || []).map((step) => `<li>${step}</li>`).join('')}</ol>
+		</details>
+	`;
+}
 
 let selectedFiles = [];
 let hasParallaxListener = false;
@@ -237,20 +267,63 @@ uploadButton.addEventListener('click', async () => {
 	const formData = new FormData();
 	selectedFiles.forEach((file) => formData.append('images', file));
 	statusLine.textContent = `Uploading ${selectedFiles.length} image${selectedFiles.length > 1 ? 's' : ''}...`;
+	solutionCard.innerHTML = '';
 
 	try {
-		const response = await fetch('/upload', {
+		const response = await fetch(`${API_BASE_URL}/upload`, {
 			method: 'POST',
 			body: formData,
 		});
 
 		if (!response.ok) {
-			throw new Error('Upload failed');
+			const err = await response.json().catch(() => ({}));
+			throw new Error(err.detail || 'Upload failed');
 		}
 
-		statusLine.textContent = 'Image upload successful.';
+		const result = await response.json();
+		statusLine.textContent = 'Image processed successfully.';
+
+		if (result.solution) {
+			renderResult(result.solution);
+		} else {
+			solutionCard.textContent = JSON.stringify(result, null, 2);
+		}
 	} catch (error) {
-		statusLine.textContent = 'Upload endpoint is not available yet.';
+		statusLine.textContent = `Error: ${error.message}`;
+		solutionCard.innerHTML = '<p style="color:red;">Unable to process the image. Confirm backend service is running on http://localhost:8000.</p>';
+	}
+});
+
+manualSolveButton.addEventListener('click', async () => {
+	const equationText = manualEquationInput.value.trim();
+	if (!equationText) {
+		statusLine.textContent = 'Please enter a valid equation first.';
+		return;
+	}
+
+	statusLine.textContent = 'Solving manual equation...';
+	try {
+		const response = await fetch(`${API_BASE_URL}/solve_text`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ equation: equationText }),
+		});
+
+		if (!response.ok) {
+			const err = await response.json().catch(() => ({}));
+			throw new Error(err.detail || 'Manual equation solve failed');
+		}
+
+		const result = await response.json();
+		statusLine.textContent = 'Manual equation processed.';
+		if (result.solution) {
+			renderResult(result.solution);
+		} else {
+			solutionCard.textContent = JSON.stringify(result, null, 2);
+		}
+	} catch (error) {
+		statusLine.textContent = `Error: ${error.message}`;
+		solutionCard.innerHTML = '<p style="color:red;">Manual equation processing failed. Check console for details.</p>';
 	}
 });
 

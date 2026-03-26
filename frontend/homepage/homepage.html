@@ -28,6 +28,12 @@
 				<button class="upload-button" id="uploadButton" type="button" disabled>Upload the image</button>
 				<input id="imageUpload" type="file" accept="image/*" multiple>
 			</div>
+			<div class="manual-solve" style="margin-top:1.2rem;">
+				<label for="manualEquation">Enter equation manually when AI fails:</label>
+				<input id="manualEquation" type="text" placeholder="e.g., y = 4x - 1" style="width:65%;padding:0.5rem;margin-top:0.3rem;" />
+				<button id="manualSolveButton" type="button" style="padding:0.5rem 0.8rem;">Solve manually</button>
+			</div>
+			<div class="solution-card" id="solutionCard" aria-live="polite" style="margin-top: 1rem;"></div>
 		</section>
 	</main>
 
