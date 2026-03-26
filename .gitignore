@@ -7,3 +7,6 @@ backend/venv/
 # Python cache
 **/__pycache__/
 *.py[cod]
+
+#kuch bhi
+backend/my_local_model/
