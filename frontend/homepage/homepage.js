@@ -3,6 +3,7 @@ const imageUpload = document.getElementById('imageUpload');
 const previewImage = document.getElementById('previewImage');
 const previewPlaceholder = document.getElementById('previewPlaceholder');
 const uploadButton = document.getElementById('uploadButton');
+const themeToggle = document.getElementById('themeToggle');
 const statusLine = document.querySelector('.status-line') || (() => {
 	const element = document.createElement('div');
 	element.className = 'status-line';
@@ -11,6 +12,22 @@ const statusLine = document.querySelector('.status-line') || (() => {
 })();
 
 let selectedFiles = [];
+
+function updateThemeButtonLabel() {
+	const isLight = document.body.classList.contains('light-theme');
+	themeToggle.textContent = isLight ? '☀️' : '🌙';
+	themeToggle.setAttribute('aria-label', isLight ? 'Switch to dark theme' : 'Switch to light theme');
+}
+
+function applySavedTheme() {
+	const savedTheme = localStorage.getItem('theme');
+	if (savedTheme === 'light') {
+		document.body.classList.add('light-theme');
+	} else {
+		document.body.classList.remove('light-theme');
+	}
+	updateThemeButtonLabel();
+}
 
 function syncButtons() {
 	const hasFile = selectedFiles.length > 0;
@@ -78,5 +95,13 @@ uploadButton.addEventListener('click', () => {
 
 	statusLine.textContent = `Ready to upload ${selectedFiles.length} selected image${selectedFiles.length > 1 ? 's' : ''}.`;
 });
+
+themeToggle.addEventListener('click', () => {
+	const isNowLight = document.body.classList.toggle('light-theme');
+	localStorage.setItem('theme', isNowLight ? 'light' : 'dark');
+	updateThemeButtonLabel();
+});
+
+applySavedTheme();
 
 syncButtons();
