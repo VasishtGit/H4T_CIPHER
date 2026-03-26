@@ -1,45 +1,39 @@
 import torch
 import torch.nn as nn
 from torchvision import transforms
-import numpy as np
 
-# REPLACE THIS: This class must match the architecture used to create your .pth file
-class GraphModel(nn.Module):
+class GraphSolverNet(nn.Module):
     def __init__(self):
-        super(GraphModel, self).__init__()
-        # Example: ResNet18 backbone
+        super().__init__()
+        # This architecture must match your .pth file exactly.
+        # Example using a standard ResNet18 backbone:
         self.backbone = torch.hub.load('pytorch/vision', 'resnet18', pretrained=False)
-        self.backbone.fc = nn.Linear(512, 128) # Adjust to your model's output
+        self.backbone.fc = nn.Linear(512, 128) # Adjust based on your model output
 
     def forward(self, x):
+        # The actual forward pass through the network layers
         return self.backbone(x)
 
 class ModelManager:
     def __init__(self, weights_path):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.model = GraphModel().to(self.device)
+        self.model = GraphSolverNet().to(self.device)
         
-        print(f"[*] Loading weights from {weights_path}...")
-        try:
-            self.model.load_state_dict(torch.load(weights_path, map_location=self.device))
-            self.model.eval()
-            print(f"[+] Model successfully deployed on {torch.cuda.get_device_name(0)}")
-        except Exception as e:
-            print(f"[-] Error: Could not load .pth file. {e}")
+        # Load the pre-trained weights
+        self.model.load_state_dict(torch.load(weights_path, map_location=self.device))
+        self.model.eval() # Set to evaluation mode for inference
 
-    def predict(self, cv2_img):
-        # Preprocessing to match training input (usually 224x224)
+    def run_inference(self, cv2_img):
+        # 1. Preprocessing: Convert image to tensor and move to RTX 3050
         transform = transforms.Compose([
             transforms.ToPILImage(),
             transforms.Resize((224, 224)),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
-        
-        img_t = transform(cv2_img).unsqueeze(0).to(self.device)
-        
-        with torch.no_grad():
-            output = self.model(img_t)
-            # LOGIC: Convert your model's output tensor into an Adjacency Matrix
-            # This is a mock-up of a 3-node connected graph
-            return [[0, 1, 1], [1, 0, 1], [1, 1, 0]]
+        input_tensor = transform(cv2_img).unsqueeze(0).to(self.device)
+
+        # 2. Executing the Forward Pass
+        with torch.no_grad(): # Disable gradient calculation to save VRAM
+            output = self.model(input_tensor) 
+            return output
