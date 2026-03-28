@@ -21,6 +21,10 @@
 	--float-chat-bot-msg: rgba(148, 163, 184, 0.18);
 	--float-chat-user-msg: linear-gradient(135deg, #0ea5e9, #6366f1);
 	--float-chat-input-bg: rgba(15, 23, 42, 0.65);
+	--math-stroke-a: rgba(125, 211, 252, 0.62);
+	--math-stroke-b: rgba(124, 58, 237, 0.54);
+	--math-stroke-c: rgba(45, 212, 191, 0.46);
+	--math-glow: drop-shadow(0 0 16px rgba(125, 211, 252, 0.36));
 }
 
 body.light-theme {
@@ -46,6 +50,10 @@ body.light-theme {
 	--float-chat-bot-msg: rgba(37, 99, 235, 0.12);
 	--float-chat-user-msg: linear-gradient(135deg, #2563eb, #0ea5e9);
 	--float-chat-input-bg: rgba(226, 232, 240, 0.62);
+	--math-stroke-a: rgba(37, 99, 235, 0.56);
+	--math-stroke-b: rgba(14, 165, 233, 0.52);
+	--math-stroke-c: rgba(99, 102, 241, 0.44);
+	--math-glow: drop-shadow(0 0 14px rgba(37, 99, 235, 0.3));
 }
 
 * {
@@ -65,6 +73,64 @@ body {
 		radial-gradient(circle at 8% 12%, var(--orb-1), transparent 26%),
 		radial-gradient(circle at 90% 10%, var(--orb-2), transparent 30%),
 		linear-gradient(155deg, var(--bg-1), var(--bg-2));
+	overflow-x: hidden;
+}
+
+.math-background {
+	position: fixed;
+	inset: -10vh -10vw;
+	pointer-events: none;
+	overflow: hidden;
+	z-index: 0;
+	transform: translateZ(0);
+	will-change: transform;
+	filter: saturate(1.05);
+}
+
+.math-float {
+	position: absolute;
+	left: 0;
+	top: 0;
+	transform: translate3d(calc(var(--x) + var(--px, 0px)), calc(var(--y) + var(--py, 0px)), 0) rotate(var(--r));
+	animation-name: driftXY;
+	animation-timing-function: ease-in-out;
+	animation-iteration-count: infinite;
+	animation-duration: var(--dur);
+	animation-delay: var(--delay);
+	opacity: var(--alpha, 0.4);
+	filter: blur(var(--blur, 0.2px));
+	will-change: transform, opacity;
+	z-index: -1;
+	transition: transform 240ms ease-out;
+}
+
+.math-float svg {
+	display: block;
+	width: 100%;
+	height: 100%;
+	filter: var(--math-glow);
+}
+
+.math-float path,
+.math-float line,
+.math-float polyline,
+.math-float circle {
+	stroke-width: 1.9;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	fill: none;
+}
+
+.math-float .math-a {
+	stroke: var(--math-stroke-a);
+}
+
+.math-float .math-b {
+	stroke: var(--math-stroke-b);
+}
+
+.math-float .math-c {
+	stroke: var(--math-stroke-c);
 }
 
 .theme-toggle {
@@ -317,6 +383,8 @@ body {
 	padding: 22px;
 	display: grid;
 	gap: 18px;
+	position: relative;
+	z-index: 2;
 }
 
 .card {
@@ -360,6 +428,27 @@ body {
 	margin: 0;
 	font-size: 0.9rem;
 	color: var(--muted);
+}
+
+@keyframes driftXY {
+	0% {
+		transform: translate3d(calc(var(--x) + var(--px, 0px)), calc(var(--y) + var(--py, 0px)), 0) rotate(var(--r));
+		opacity: calc(var(--alpha, 0.4) * 0.84);
+	}
+	50% {
+		transform: translate3d(calc(var(--x) + var(--px, 0px) + var(--mx, 30px)), calc(var(--y) + var(--py, 0px) + var(--my, -36px)), 0) rotate(calc(var(--r) + var(--rr, 4deg)));
+		opacity: var(--alpha, 0.4);
+	}
+	100% {
+		transform: translate3d(calc(var(--x) + var(--px, 0px)), calc(var(--y) + var(--py, 0px)), 0) rotate(var(--r));
+		opacity: calc(var(--alpha, 0.4) * 0.84);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.math-float {
+		animation: none;
+	}
 }
 
 .question-history {
