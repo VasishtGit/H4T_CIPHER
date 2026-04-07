@@ -17,6 +17,10 @@ const termsError = document.getElementById('termsError');
 
 let hasParallaxListener = false;
 
+const AUTH_BASE_URL = 'http://localhost:8002';
+const SIGNUP_API_URL = `${AUTH_BASE_URL}/signup`;
+const LOGIN_PAGE_URL = '../login/login.html';
+
 const mathSvgTemplates = [
 	`<svg viewBox="0 0 220 140" preserveAspectRatio="none" aria-hidden="true">
 		<g class="math-a">
@@ -233,12 +237,37 @@ signinForm.addEventListener('submit', async (event) => {
 	signinButton.disabled = true;
 	setStatus('Creating your account...', null);
 
-	// Simulated signup flow until backend endpoint is wired.
-	await new Promise((resolve) => setTimeout(resolve, 1000));
+	try {
+		const response = await fetch(SIGNUP_API_URL, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			credentials: 'include',
+			body: JSON.stringify({
+				full_name: fullNameInput.value.trim(),
+				email: emailInput.value.trim(),
+				password: passwordInput.value,
+			}),
+		});
 
-	setStatus('Account created successfully. You can now login.', 'success');
-	signinButton.disabled = false;
-	signinForm.reset();
+		let payload = {};
+		try {
+			payload = await response.json();
+		} catch {
+			payload = {};
+		}
+
+		if (!response.ok) {
+			throw new Error(payload.detail || 'Signup failed.');
+		}
+
+		setStatus('Account created. Redirecting to login...', 'success');
+		setTimeout(() => {
+			window.location.href = LOGIN_PAGE_URL;
+		}, 600);
+	} catch (error) {
+		setStatus(error.message || 'Unable to create account right now.', 'error');
+		signinButton.disabled = false;
+	}
 });
 
 themeToggle.addEventListener('click', () => {

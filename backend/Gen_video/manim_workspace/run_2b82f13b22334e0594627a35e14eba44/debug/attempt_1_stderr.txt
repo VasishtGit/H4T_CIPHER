@@ -1,0 +1,70 @@
+
+Animation 0: Write(VGroup of 7 submobjects):   0%|          | 0/30 [00:00<?, ?it/s]
+Animation 0: Write(VGroup of 7 submobjects):  13%|#3        | 4/30 [00:00<00:00, 33.69it/s]
+Animation 0: Write(VGroup of 7 submobjects):  27%|##6       | 8/30 [00:00<00:00, 32.40it/s]
+Animation 0: Write(VGroup of 7 submobjects):  40%|####      | 12/30 [00:00<00:00, 30.54it/s]
+Animation 0: Write(VGroup of 7 submobjects):  53%|#####3    | 16/30 [00:00<00:00, 29.01it/s]
+Animation 0: Write(VGroup of 7 submobjects):  63%|######3   | 19/30 [00:00<00:00, 19.32it/s]
+Animation 0: Write(VGroup of 7 submobjects):  73%|#######3  | 22/30 [00:00<00:00, 19.53it/s]
+Animation 0: Write(VGroup of 7 submobjects):  83%|########3 | 25/30 [00:01<00:00, 18.89it/s]
+Animation 0: Write(VGroup of 7 submobjects):  93%|#########3| 28/30 [00:01<00:00, 18.56it/s]
+Animation 0: Write(VGroup of 7 submobjects): 100%|##########| 30/30 [00:01<00:00, 17.82it/s]
+                                                                                            
+
+Animation 2: Transform(VGroup of 11 submobjects):   0%|          | 0/15 [00:00<?, ?it/s]
+Animation 2: Transform(VGroup of 11 submobjects):  13%|#3        | 2/15 [00:00<00:00, 17.10it/s]
+Animation 2: Transform(VGroup of 11 submobjects):  33%|###3      | 5/15 [00:00<00:00, 19.43it/s]
+Animation 2: Transform(VGroup of 11 submobjects):  53%|#####3    | 8/15 [00:00<00:00, 19.51it/s]
+Animation 2: Transform(VGroup of 11 submobjects):  67%|######6   | 10/15 [00:00<00:00, 19.52it/s]
+Animation 2: Transform(VGroup of 11 submobjects):  80%|########  | 12/15 [00:00<00:00, 18.96it/s]
+Animation 2: Transform(VGroup of 11 submobjects):  93%|#########3| 14/15 [00:00<00:00, 19.23it/s]
+                                                                                                 
+
+Animation 3: FadeIn(Text('3 * 2 = 6')):   0%|          | 0/15 [00:00<?, ?it/s]
+                                                                              
++--------------------- Traceback (most recent call last) ---------------------+
+| C:\Users\vk200\OneDrive\Desktop\H4T_CIPHER\backend\venv\Lib\site-packages\m |
+| anim\cli\render\commands.py:125 in render                                   |
+|                                                                             |
+|   122             try:                                                      |
+|   123                 with tempconfig({}):                                  |
+|   124                     scene = SceneClass()                              |
+| > 125                     scene.render()                                    |
+|   126             except Exception:                                         |
+|   127                 error_console.print_exception()                       |
+|   128                 sys.exit(1)                                           |
+|                                                                             |
+| C:\Users\vk200\OneDrive\Desktop\H4T_CIPHER\backend\venv\Lib\site-packages\m |
+| anim\scene\scene.py:259 in render                                           |
+|                                                                             |
+|    256         """                                                          |
+|    257         self.setup()                                                 |
+|    258         try:                                                         |
+| >  259             self.construct()                                         |
+|    260         except EndSceneEarlyException:                               |
+|    261             pass                                                     |
+|    262         except RerunSceneException:                                  |
+|                                                                             |
+| C:\Users\vk200\OneDrive\Desktop\H4T_CIPHER\backend\Gen_video\manim_workspac |
+| e\run_2b82f13b22334e0594627a35e14eba44\scene.py:35 in construct             |
+|                                                                             |
+|   32                                                                        |
+|   33         self.play(FadeIn(calculations[0]))                             |
+|   34         for calc in calculations[1:]:                                  |
+| > 35             self.play(Transform(calculations[calculations.index(calc)- |
+|   36             self.wait(0.5)                                             |
+|   37                                                                        |
+|   38         total_sum = Text("6 + 4 + 20 + 6 + 14 + 0 + 27 = 77")          |
+|                                                                             |
+| C:\Users\vk200\OneDrive\Desktop\H4T_CIPHER\backend\venv\Lib\site-packages\m |
+| anim\mobject\mobject.py:760 in __getattr__                                  |
+|                                                                             |
+|    757             return types.MethodType(setter, self)                    |
+|    758                                                                      |
+|    759         # Unhandled attribute, therefore error                       |
+| >  760         raise AttributeError(f"{type(self).__name__} object has no a |
+|    761                                                                      |
+|    762     @property                                                        |
+|    763     def width(self) -> float:                                        |
++-----------------------------------------------------------------------------+
+AttributeError: VGroup object has no attribute 'index'

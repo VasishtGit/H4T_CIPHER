@@ -1,42 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Upload Studio</title>
-	<link rel="stylesheet" href="homepage.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Image Upload</title>
+<link rel="stylesheet" href="homepage.css">
 </head>
 <body>
-	<div class="math-background" id="mathBackground" aria-hidden="true"></div>
-	<button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light theme">🌙</button>
-	<main class="page">
-		<section class="hero" aria-label="Image upload area">
-			<h1>AI GRAPH QUESTION SOLVER</h1>
-			<p class="subtitle">
-				Drag and drop graph-related math question image, or click to browse your files.
-			</p>
+<main class="container">
+<header class="topbar">
+<span id="userIndicator">Signed in as -</span>
+<button id="logoutButton" type="button">Logout</button>
+</header>
+<h1>Upload Image</h1>
+<p class="hint">Select one image and send it with a simple POST request.</p>
 
-			<div class="upload-card" id="dropZone">
-				<div class="preview-wrap" id="previewWrap">
-					<img id="previewImage" alt="Uploaded preview" />
-					<div class="preview-placeholder" id="previewPlaceholder">
-						<span class="placeholder-icon">+</span>
-						<button class="drop-prompt-button" type="button">Drop an image here</button>
-						<small>PNG, JPG, WEBP</small>
-					</div>
-				</div>
-				<button class="upload-button" id="uploadButton" type="button" disabled>Upload the image</button>
-				<input id="imageUpload" type="file" accept="image/*" multiple>
-			</div>
-			<div class="manual-solve" style="margin-top:1.2rem;">
-				<label for="manualEquation">Enter equation manually when AI fails:</label>
-				<input id="manualEquation" type="text" placeholder="e.g., y = 4x - 1" style="width:65%;padding:0.5rem;margin-top:0.3rem;" />
-				<button id="manualSolveButton" type="button" style="padding:0.5rem 0.8rem;">Solve manually</button>
-			</div>
-			<div class="solution-card" id="solutionCard" aria-live="polite" style="margin-top: 1rem;"></div>
-		</section>
-	</main>
+<form id="uploadForm" class="upload-form">
+<input id="imageInput" type="file" accept="image/*" required>
+<button id="uploadButton" type="submit">Continue</button>
+</form>
 
-	<script src="homepage.js"></script>
+<div id="status" class="status" aria-live="polite"></div>
+</main>
+
+<script src="homepage.js"></script>
 </body>
 </html>

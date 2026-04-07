@@ -1,10 +1,6 @@
-fastapi>=0.111,<1.0
-uvicorn[standard]>=0.30,<1.0
-python-multipart>=0.0.9,<1.0
-
-numpy>=1.26,<2.0
-opencv-python>=4.9,<5.0
-easyocr>=1.7,<2.0
-requests>=2.31,<3.0
-
-psycopg2-binary>=2.9,<3.0
+fastapi
+uvicorn[standard]
+httpx
+python-multipart
+supabase
+python-dotenv

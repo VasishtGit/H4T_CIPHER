@@ -11,6 +11,11 @@ const emailError = document.getElementById('emailError');
 const passwordError = document.getElementById('passwordError');
 let hasParallaxListener = false;
 
+const AUTH_BASE_URL = 'http://localhost:8002';
+const LOGIN_API_URL = `${AUTH_BASE_URL}/login`;
+const ME_API_URL = `${AUTH_BASE_URL}/me`;
+const HOME_PAGE_URL = '../homepage/homepage.html';
+
 const mathSvgTemplates = [
 	`<svg viewBox="0 0 220 140" preserveAspectRatio="none" aria-hidden="true">
 		<g class="math-a">
@@ -204,17 +209,40 @@ loginForm.addEventListener('submit', async (event) => {
 	loginButton.disabled = true;
 	setStatus('Signing you in...', null);
 
-	// Simulated login flow until backend endpoint is wired.
-	await new Promise((resolve) => setTimeout(resolve, 900));
+	try {
+		const response = await fetch(LOGIN_API_URL, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			credentials: 'include',
+			body: JSON.stringify({
+				email: emailInput.value.trim(),
+				password: passwordInput.value,
+			}),
+		});
 
-	if (rememberMeInput.checked) {
-		localStorage.setItem('rememberedEmail', emailInput.value.trim());
-	} else {
-		localStorage.removeItem('rememberedEmail');
+		let payload = {};
+		try {
+			payload = await response.json();
+		} catch {
+			payload = {};
+		}
+
+		if (!response.ok) {
+			throw new Error(payload.detail || 'Login failed.');
+		}
+
+		if (rememberMeInput.checked) {
+			localStorage.setItem('rememberedEmail', emailInput.value.trim());
+		} else {
+			localStorage.removeItem('rememberedEmail');
+		}
+
+		setStatus('Login successful. Redirecting...', 'success');
+		window.location.href = HOME_PAGE_URL;
+	} catch (error) {
+		setStatus(error.message || 'Unable to login right now.', 'error');
+		loginButton.disabled = false;
 	}
-
-	setStatus('Login successful. Redirecting to workspace...', 'success');
-	loginButton.disabled = false;
 });
 
 themeToggle.addEventListener('click', () => {
@@ -237,3 +265,16 @@ applyRememberedEmail();
 applySavedTheme();
 initMathBackground();
 window.addEventListener('resize', initMathBackground);
+
+async function redirectIfAlreadySignedIn() {
+	try {
+		const response = await fetch(ME_API_URL, { credentials: 'include' });
+		if (response.ok) {
+			window.location.href = HOME_PAGE_URL;
+		}
+	} catch {
+		// Keep user on login page when auth service is unreachable.
+	}
+}
+
+redirectIfAlreadySignedIn();
