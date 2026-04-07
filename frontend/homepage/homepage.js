@@ -13,6 +13,12 @@ const LOGIN_PAGE_URL = '../login/login.html';
 const AUTH_BASE_URL = 'https://h4t-cipher-1.onrender.com';
 const AUTH_ME_URL = `${AUTH_BASE_URL}/me`;
 const AUTH_LOGOUT_URL = `${AUTH_BASE_URL}/logout`;
+const TOKEN_KEY = 'token';
+
+function getAuthHeaders() {
+    const token = localStorage.getItem(TOKEN_KEY);
+    return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 function setStatus(message) {
     statusEl.textContent = message;
@@ -57,7 +63,7 @@ uploadForm.addEventListener('submit', async (event) => {
 
 async function ensureAuthenticated() {
     try {
-        const response = await fetch(AUTH_ME_URL, { credentials: 'include' });
+        const response = await fetch(AUTH_ME_URL, { headers: getAuthHeaders() });
         if (!response.ok) {
             window.location.href = LOGIN_PAGE_URL;
             return false;
@@ -78,8 +84,9 @@ async function ensureAuthenticated() {
 if (logoutButton) {
     logoutButton.addEventListener('click', async () => {
         try {
-            await fetch(AUTH_LOGOUT_URL, { method: 'POST', credentials: 'include' });
+            await fetch(AUTH_LOGOUT_URL, { method: 'POST', headers: getAuthHeaders() });
         } finally {
+            localStorage.removeItem(TOKEN_KEY);
             window.location.href = LOGIN_PAGE_URL;
         }
     });

@@ -15,6 +15,12 @@ const AUTH_BASE_URL = 'https://h4t-cipher-1.onrender.com';
 const LOGIN_API_URL = `${AUTH_BASE_URL}/login`;
 const ME_API_URL = `${AUTH_BASE_URL}/me`;
 const HOME_PAGE_URL = '../homepage/homepage.html';
+const TOKEN_KEY = 'token';
+
+function getAuthHeaders() {
+	const token = localStorage.getItem(TOKEN_KEY);
+	return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 const mathSvgTemplates = [
 	`<svg viewBox="0 0 220 140" preserveAspectRatio="none" aria-hidden="true">
@@ -231,6 +237,10 @@ loginForm.addEventListener('submit', async (event) => {
 			throw new Error(payload.detail || 'Login failed.');
 		}
 
+		if (payload.access_token) {
+			localStorage.setItem(TOKEN_KEY, payload.access_token);
+		}
+
 		if (rememberMeInput.checked) {
 			localStorage.setItem('rememberedEmail', emailInput.value.trim());
 		} else {
@@ -268,7 +278,7 @@ window.addEventListener('resize', initMathBackground);
 
 async function redirectIfAlreadySignedIn() {
 	try {
-		const response = await fetch(ME_API_URL, { credentials: 'include' });
+		const response = await fetch(ME_API_URL, { headers: getAuthHeaders() });
 		if (response.ok) {
 			window.location.href = HOME_PAGE_URL;
 		}

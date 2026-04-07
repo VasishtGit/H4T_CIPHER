@@ -20,6 +20,7 @@ let hasParallaxListener = false;
 const AUTH_BASE_URL = 'https://h4t-cipher-1.onrender.com';
 const SIGNUP_API_URL = `${AUTH_BASE_URL}/signup`;
 const LOGIN_PAGE_URL = '../login/login.html';
+const TOKEN_KEY = 'token';
 
 const mathSvgTemplates = [
 	`<svg viewBox="0 0 220 140" preserveAspectRatio="none" aria-hidden="true">
@@ -258,6 +259,10 @@ signinForm.addEventListener('submit', async (event) => {
 
 		if (!response.ok) {
 			throw new Error(payload.detail || 'Signup failed.');
+		}
+
+		if (payload.access_token) {
+			localStorage.setItem(TOKEN_KEY, payload.access_token);
 		}
 
 		setStatus('Account created. Redirecting to login...', 'success');

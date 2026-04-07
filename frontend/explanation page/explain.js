@@ -27,13 +27,14 @@ const LATEST_EXPLANATION_KEY = 'latestExplanationText';
 const LATEST_EXPLANATION_MODEL_KEY = 'latestExplanationModel';
 const LATEST_DESCRIPTION_KEY = 'latestQuestionDescription';
 
-const UPLOAD_URL = 'http://localhost:8000/upload';
+const UPLOAD_URL = 'https://h4t-cipher-2.onrender.com/upload';
 const GENERATE_VIDEO_URL = 'http://localhost:8001/generate-video-v2';
 const VIDEO_STREAM_URL = 'http://localhost:8001/video';
 const AUTH_BASE_URL = 'https://h4t-cipher-1.onrender.com';
 const AUTH_ME_URL = `${AUTH_BASE_URL}/me`;
 const AUTH_LOGOUT_URL = `${AUTH_BASE_URL}/logout`;
 const LOGIN_PAGE_URL = '../login/login.html';
+const TOKEN_KEY = 'token';
 
 let pipelineStarted = false;
 let hasVideoEventBindings = false;
@@ -47,6 +48,11 @@ let latestVideoRequestPayload = null;
 const EXPLANATION_LOADING_MS = 90_000;
 const VIDEO_LOADING_MS = 120_000;
 const VIDEO_404_FAILURE_LIMIT = 5;
+
+function getAuthHeaders() {
+	const token = localStorage.getItem(TOKEN_KEY);
+	return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 function setVideoStatus(text) {
 	if (videoStatus) {
@@ -573,7 +579,7 @@ async function requestAndLoadVideo() {
 	try {
 		videoResponse = await fetch(GENERATE_VIDEO_URL, {
 			method: 'POST',
-			credentials: 'include',
+			headers: getAuthHeaders(),
 			body: videoFormData,
 		});
 	} catch {
@@ -685,7 +691,7 @@ async function runBackendPipeline() {
 	try {
 		uploadResponse = await fetch(UPLOAD_URL, {
 			method: 'POST',
-			credentials: 'include',
+			headers: getAuthHeaders(),
 			body: uploadFormData,
 		});
 	} catch {
@@ -738,7 +744,7 @@ if (generateVideoButton) {
 
 async function ensureAuthenticated() {
 	try {
-		const response = await fetch(AUTH_ME_URL, { credentials: 'include' });
+		const response = await fetch(AUTH_ME_URL, { headers: getAuthHeaders() });
 		if (!response.ok) {
 			window.location.href = LOGIN_PAGE_URL;
 			return false;
@@ -759,8 +765,9 @@ async function ensureAuthenticated() {
 if (logoutButton) {
 	logoutButton.addEventListener('click', async () => {
 		try {
-			await fetch(AUTH_LOGOUT_URL, { method: 'POST', credentials: 'include' });
+			await fetch(AUTH_LOGOUT_URL, { method: 'POST', headers: getAuthHeaders() });
 		} finally {
+			localStorage.removeItem(TOKEN_KEY);
 			window.location.href = LOGIN_PAGE_URL;
 		}
 	});

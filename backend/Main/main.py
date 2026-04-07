@@ -92,9 +92,17 @@ def _get_user_from_token(access_token: str) -> dict:
 
 
 def _get_current_user(request: Request) -> dict:
-    token = request.cookies.get(SESSION_COOKIE_NAME)
+    auth_header = request.headers.get("Authorization") or ""
+    token = ""
+    if auth_header.lower().startswith("bearer "):
+        token = auth_header.split(" ", 1)[1].strip()
+
     if not token:
-        raise HTTPException(status_code=401, detail="Not signed in.")
+        # Backward-compatible fallback while migrating clients.
+        token = request.cookies.get(SESSION_COOKIE_NAME) or ""
+
+    if not token:
+        raise HTTPException(status_code=401, detail="No token")
 
     try:
         return _get_user_from_token(token)

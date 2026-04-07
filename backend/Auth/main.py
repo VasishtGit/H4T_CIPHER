@@ -12,7 +12,6 @@ load_dotenv()
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
 SESSION_COOKIE_NAME = os.getenv("SESSION_COOKIE_NAME", "h4t_session")
-COOKIE_MAX_AGE_SECONDS = int(os.getenv("COOKIE_MAX_AGE_SECONDS", str(60 * 60 * 24 * 7)))
 ALLOWED_ORIGINS = [
     "http://localhost:5500",
     "http://127.0.0.1:5500",
@@ -62,16 +61,18 @@ def _get_user_from_token(access_token: str) -> dict:
     return _extract_user_from_auth_response(response)
 
 
-def _set_session_cookie(resp: fastapi.Response, access_token: str):
-    resp.set_cookie(
-        key=SESSION_COOKIE_NAME,
-        value=access_token,
-        max_age=COOKIE_MAX_AGE_SECONDS,
-        httponly=True,
-        secure=True,
-        samesite="none",
-        path="/",
-    )
+def _token_from_request(request: fastapi.Request) -> str:
+    auth_header = request.headers.get("Authorization") or ""
+    if auth_header.lower().startswith("bearer "):
+        token = auth_header.split(" ", 1)[1].strip()
+        if token:
+            return token
+
+    token = request.cookies.get(SESSION_COOKIE_NAME)
+    if token:
+        return token
+
+    raise fastapi.HTTPException(status_code=401, detail="No token")
 
 
 def _user_payload(user: dict) -> dict:
@@ -126,10 +127,9 @@ def signup(payload: dict = Body(...)):
 
     response = fastapi.responses.JSONResponse({
         "user": _user_payload(user),
+        "access_token": session.access_token,
         "message": "Signup successful"
     })
-
-    _set_session_cookie(response, session.access_token)
     return response
 
 
@@ -150,9 +150,11 @@ def login(payload: dict = Body(...)):
         raise fastapi.HTTPException(status_code=401, detail="Invalid credentials.")
 
     user = _extract_user_from_auth_response(sign_in)
-    response = fastapi.responses.JSONResponse({"user": _user_payload(user), "message": "Login successful"})
-    _set_session_cookie(response, session.access_token)
-    return response
+    return {
+        "user": _user_payload(user),
+        "access_token": session.access_token,
+        "message": "Login successful",
+    }
 
 
 @app.post("/logout")
@@ -164,9 +166,7 @@ def logout():
 
 @app.get("/me")
 def me(request: fastapi.Request):
-    token = request.cookies.get(SESSION_COOKIE_NAME)
-    if not token:
-        raise fastapi.HTTPException(status_code=401, detail="Not signed in.")
+    token = _token_from_request(request)
 
     try:
         user = _get_user_from_token(token)
