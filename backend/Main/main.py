@@ -32,6 +32,7 @@ ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "null",
+    "https://h4-t-cipher.vercel.app"
 ]
 
 DESCRIPTION_PROMPT = (
