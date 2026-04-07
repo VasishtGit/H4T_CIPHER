@@ -11,3 +11,5 @@ backend/venv/
 #kuch bhi
 backend/my_local_model/
 backend/venv/
+
+/backend/.env

@@ -124,12 +124,26 @@ def _extract_message_content(result: dict) -> str:
         raise HTTPException(status_code=502, detail="OpenRouter response missing message content.")
 
     if isinstance(content, list):
-        text_parts = [
-            part.get("text", "")
-            for part in content
-            if isinstance(part, dict) and part.get("type") == "text"
-        ]
-        content = "\n".join(part for part in text_parts if part).strip()
+        text_parts: list[str] = []
+        for part in content:
+            if isinstance(part, str):
+                if part.strip():
+                    text_parts.append(part.strip())
+                continue
+
+            if not isinstance(part, dict):
+                continue
+
+            candidate = (
+                part.get("text")
+                or part.get("content")
+                or part.get("value")
+                or part.get("output_text")
+            )
+            if isinstance(candidate, str) and candidate.strip():
+                text_parts.append(candidate.strip())
+
+        content = "\n".join(text_parts).strip()
 
     if not content:
         raise HTTPException(status_code=502, detail="OpenRouter returned empty content.")
@@ -223,10 +237,12 @@ async def upload_image(request: Request, image: UploadFile = File(...)):
         print(f"Sending description request to OpenRouter at {datetime.now().isoformat()}")
         desc_res = await call_api(client, description_payload, headers, retries=3)
         print(f"Received description response at {datetime.now().isoformat()}")
+        print(f"Description status={desc_res.status_code}, body chars={len(desc_res.text)}")
 
     try:
         desc_result = desc_res.json()
     except ValueError as exc:
+        print(f"Description non-JSON body preview: {desc_res.text[:500]}")
         raise HTTPException(status_code=502, detail="OpenRouter returned non-JSON response.") from exc
 
     if desc_res.status_code >= 400:
@@ -238,7 +254,11 @@ async def upload_image(request: Request, image: UploadFile = File(...)):
             detail=error_message or f"OpenRouter description error (status {desc_res.status_code}).",
         )
 
-    description_text = _extract_message_content(desc_result)
+    try:
+        description_text = _extract_message_content(desc_result)
+    except HTTPException:
+        print(f"Description parse failure payload preview: {str(desc_result)[:1200]}")
+        raise
 
     solver_payload = {
         "model": SOLVER_MODEL_NAME,
