@@ -28,8 +28,8 @@ const LATEST_EXPLANATION_MODEL_KEY = 'latestExplanationModel';
 const LATEST_DESCRIPTION_KEY = 'latestQuestionDescription';
 
 const UPLOAD_URL = 'https://h4t-cipher-2.onrender.com/upload';
-const GENERATE_VIDEO_URL = 'http://localhost:8001/generate-video-v2';
-const VIDEO_STREAM_URL = 'http://localhost:8001/video';
+const GENERATE_VIDEO_URL = 'https://h4t-cipher-3.onrender.com/generate-video-v2';
+const VIDEO_STREAM_URL = 'https://h4t-cipher-3.onrender.com/video';
 const AUTH_BASE_URL = 'https://h4t-cipher-1.onrender.com';
 const AUTH_ME_URL = `${AUTH_BASE_URL}/me`;
 const AUTH_LOGOUT_URL = `${AUTH_BASE_URL}/logout`;
