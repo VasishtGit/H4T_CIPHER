@@ -10,7 +10,7 @@ const QUESTION_IMAGE_NAME_KEY = 'questionImageName';
 const QUESTION_IMAGE_TYPE_KEY = 'questionImageType';
 const EXPLAIN_PAGE_URL = '../explanation page/explain.html';
 const LOGIN_PAGE_URL = '../login/login.html';
-const AUTH_BASE_URL = 'http://localhost:8002';
+const AUTH_BASE_URL = 'https://h4t-cipher-1.onrender.com';
 const AUTH_ME_URL = `${AUTH_BASE_URL}/me`;
 const AUTH_LOGOUT_URL = `${AUTH_BASE_URL}/logout`;
 

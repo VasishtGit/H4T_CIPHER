@@ -17,7 +17,7 @@ const termsError = document.getElementById('termsError');
 
 let hasParallaxListener = false;
 
-const AUTH_BASE_URL = 'http://localhost:8002';
+const AUTH_BASE_URL = 'https://h4t-cipher-1.onrender.com';
 const SIGNUP_API_URL = `${AUTH_BASE_URL}/signup`;
 const LOGIN_PAGE_URL = '../login/login.html';
 

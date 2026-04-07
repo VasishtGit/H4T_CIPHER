@@ -11,7 +11,7 @@ const emailError = document.getElementById('emailError');
 const passwordError = document.getElementById('passwordError');
 let hasParallaxListener = false;
 
-const AUTH_BASE_URL = 'http://localhost:8002';
+const AUTH_BASE_URL = 'https://h4t-cipher-1.onrender.com';
 const LOGIN_API_URL = `${AUTH_BASE_URL}/login`;
 const ME_API_URL = `${AUTH_BASE_URL}/me`;
 const HOME_PAGE_URL = '../homepage/homepage.html';
