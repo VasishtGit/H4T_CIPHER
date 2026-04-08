@@ -179,8 +179,7 @@ def me(request: fastapi.Request):
 @app.get("/health", methods=["GET", "HEAD"])
 async def health_check():
     return {
-        "status": "ok",
-        "timestamp": datetime.utcnow().isoformat()
+        "status": "ok"
     }
 
 if __name__ == "__main__":
