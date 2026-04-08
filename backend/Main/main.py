@@ -315,11 +315,9 @@ async def upload_image(request: Request, image: UploadFile = File(...)):
 async def root():
     return {"message": time.strftime("Hello! The server is up and running at %Y-%m-%d %H:%M:%S")}
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 async def health_check():
-    return {
-        "status": "ok"
-    }
+    return {"status": "ok"}
 
 
 if __name__ == "__main__":
