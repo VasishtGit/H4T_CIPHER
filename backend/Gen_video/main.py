@@ -83,6 +83,9 @@ FIX_CODE_PROMPT = (
     "ANIMATION RULES:\n"
     "- Allowed animations ONLY:\n"
     "  Write(), FadeIn(), FadeOut(), Transform()\n"
+    "- ALL animations MUST be used inside self.play()\n"
+    "- Example: self.play(Write(text))\n"
+    "- NEVER call animations like self.Write()\n"
     "- Do NOT use any other animations.\n\n"
 
     "LAYOUT RULES:\n"
@@ -98,6 +101,7 @@ FIX_CODE_PROMPT = (
     "- Use of LaTeX objects (replace with Text)\n"
     "- Undefined variables\n"
     "- Wrong animation calls\n"
+    "- Fix incorrect animation usage like self.Write(obj) -> self.play(Write(obj))\n"
     "- Objects not added or animated properly\n"
     "- Syntax errors\n\n"
 
@@ -134,6 +138,11 @@ PROMPT = (
 
     "- Use these animations only:\n"
     "  Write(), FadeIn(), FadeOut(), Transform()\n\n"
+
+    "ANIMATION USAGE RULE (CRITICAL):\n"
+    "- ALL animations MUST be used inside self.play()\n"
+    "- Example: self.play(Write(text))\n"
+    "- NEVER call animations like self.Write()\n\n"
 
     "- Use positioning functions like:\n"
     "  .to_edge(), .shift(), .next_to(), .arrange(DOWN)\n\n"

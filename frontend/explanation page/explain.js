@@ -47,7 +47,6 @@ let latestVideoRequestPayload = null;
 
 const EXPLANATION_LOADING_MS = 90_000;
 const VIDEO_LOADING_MS = 120_000;
-const VIDEO_404_FAILURE_LIMIT = 5;
 
 function getAuthHeaders() {
 	const token = localStorage.getItem(TOKEN_KEY);
@@ -504,34 +503,21 @@ async function waitForAnyVideoReady(streamUrls, maxWaitMs = 30000, intervalMs = 
 	return null;
 }
 
-async function waitForAnyVideoReadyWith404Limit(
-	streamUrls,
-	maxWaitMs = VIDEO_LOADING_MS,
-	intervalMs = 900,
-	max404Count = VIDEO_404_FAILURE_LIMIT,
-) {
+async function waitForVideo(streamUrls, maxWaitMs = VIDEO_LOADING_MS) {
 	const start = Date.now();
-	let notFoundCount = 0;
 
 	while (Date.now() - start < maxWaitMs) {
 		for (const streamUrl of streamUrls) {
 			const probe = await checkVideoUrl(streamUrl);
 			if (probe.ready) {
-				return { readyUrl: streamUrl, notFoundCount };
-			}
-
-			if (probe.status === 404) {
-				notFoundCount += 1;
-				if (notFoundCount >= max404Count) {
-					return { readyUrl: null, notFoundCount, failedBy404: true };
-				}
+				return streamUrl;
 			}
 		}
 
-		await sleep(intervalMs);
+		await sleep(1000);
 	}
 
-	return { readyUrl: null, notFoundCount, failedBy404: false };
+	return null;
 }
 
 async function tryLoadLatestGeneratedVideo() {
@@ -602,16 +588,11 @@ async function requestAndLoadVideo() {
 	if (videoLoaderLabel) {
 		videoLoaderLabel.textContent = 'Waiting for video stream...';
 	}
-	const waitResult = await waitForAnyVideoReadyWith404Limit(streamUrls, VIDEO_LOADING_MS, 900, VIDEO_404_FAILURE_LIMIT);
-	const readyUrl = waitResult.readyUrl;
+	const readyUrl = await waitForVideo(streamUrls, VIDEO_LOADING_MS);
 
 	if (!readyUrl) {
 		stopVideoLoader();
-		if (waitResult.failedBy404) {
-			setVideoStatus('Video generation failed: stream returned 404 five times. Please try again.');
-		} else {
-			setVideoStatus('Video generation timed out after 2 minutes. Please try again.');
-		}
+		setVideoStatus('Video generation timed out after 2 minutes. Please try again.');
 		setGenerateVideoButtonState(true);
 		return;
 	}
