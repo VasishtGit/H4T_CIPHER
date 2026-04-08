@@ -352,6 +352,8 @@ async def root():
 async def health_check():
     return {"status": "ok"}
 
+#i am bored so i am tpying anything
+
 if __name__ == "__main__":
     import uvicorn
 
