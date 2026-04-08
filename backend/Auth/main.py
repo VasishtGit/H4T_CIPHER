@@ -176,6 +176,12 @@ def me(request: fastapi.Request):
 
     return {"user": _user_payload(user)}
 
+@app.get("/health")
+async def health_check():
+    return {
+        "status": "ok",
+        "timestamp": datetime.utcnow().isoformat()
+    }
 
 if __name__ == "__main__":
     import uvicorn

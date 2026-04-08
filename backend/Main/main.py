@@ -311,6 +311,13 @@ async def upload_image(request: Request, image: UploadFile = File(...)):
         "user_id": user_id,
     }
 
+@app.get("/health")
+async def health_check():
+    return {
+        "status": "ok",
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
 
 if __name__ == "__main__":
     import uvicorn
