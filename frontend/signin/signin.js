@@ -2,26 +2,34 @@ const signinForm = document.getElementById('signinForm');
 const fullNameInput = document.getElementById('fullName');
 const emailInput = document.getElementById('email');
 const otpInput = document.getElementById('otp');
+const passwordInput = document.getElementById('password');
+const confirmPasswordInput = document.getElementById('confirmPassword');
 const sendOtpButton = document.getElementById('sendOtpButton');
 const agreeTermsInput = document.getElementById('agreeTerms');
+const togglePasswordButton = document.getElementById('togglePassword');
 const themeToggle = document.getElementById('themeToggle');
 const mathBackground = document.getElementById('mathBackground');
 const signinButton = document.getElementById('signinButton');
 const statusText = document.getElementById('statusText');
+const otpTimer = document.getElementById('otpTimer');
 const nameError = document.getElementById('nameError');
 const emailError = document.getElementById('emailError');
 const otpError = document.getElementById('otpError');
+const passwordError = document.getElementById('passwordError');
+const confirmPasswordError = document.getElementById('confirmPasswordError');
 const termsError = document.getElementById('termsError');
 
 let hasParallaxListener = false;
 
 const AUTH_BASE_URL = 'https://h4t-cipher-1.onrender.com';
-const SEND_OTP_API_URL = `${AUTH_BASE_URL}/send-otp`;
-const VERIFY_OTP_API_URL = `${AUTH_BASE_URL}/verify-otp`;
-const LOGIN_PAGE_URL = '../login/login.html';
+const SEND_OTP_API_URL = `${AUTH_BASE_URL}/signup/send-otp`;
+const VERIFY_OTP_API_URL = `${AUTH_BASE_URL}/signup/verify-otp`;
 const HOME_PAGE_URL = '../homepage/homepage.html';
 const TOKEN_KEY = 'token';
 let otpSentForEmail = '';
+const OTP_WINDOW_MS = 5 * 60 * 1000;
+let otpDeadline = 0;
+let otpTimerInterval = null;
 
 const mathSvgTemplates = [
 	`<svg viewBox="0 0 220 140" preserveAspectRatio="none" aria-hidden="true">
@@ -156,10 +164,14 @@ function validateForm() {
 	const fullName = fullNameInput.value.trim();
 	const email = emailInput.value.trim();
 	const otp = otpInput.value.trim();
+	const password = passwordInput.value;
+	const confirmPassword = confirmPasswordInput.value;
 
 	clearFieldError(fullNameInput, nameError);
 	clearFieldError(emailInput, emailError);
 	clearFieldError(otpInput, otpError);
+	clearFieldError(passwordInput, passwordError);
+	clearFieldError(confirmPasswordInput, confirmPasswordError);
 	clearFieldError(agreeTermsInput, termsError);
 
 	if (!fullName || fullName.length < 2) {
@@ -183,8 +195,29 @@ function validateForm() {
 		isValid = false;
 	}
 
+	if (!password) {
+		showFieldError(passwordInput, passwordError, 'Please create a password.');
+		isValid = false;
+	} else if (password.length < 8) {
+		showFieldError(passwordInput, passwordError, 'Password must be at least 8 characters long.');
+		isValid = false;
+	}
+
+	if (!confirmPassword) {
+		showFieldError(confirmPasswordInput, confirmPasswordError, 'Please confirm your password.');
+		isValid = false;
+	} else if (confirmPassword !== password) {
+		showFieldError(confirmPasswordInput, confirmPasswordError, 'Passwords do not match.');
+		isValid = false;
+	}
+
 	if (!agreeTermsInput.checked) {
 		showFieldError(agreeTermsInput, termsError, 'Please accept the terms to continue.');
+		isValid = false;
+	}
+
+	if (otpDeadline && Date.now() > otpDeadline) {
+		showFieldError(otpInput, otpError, 'OTP expired. Please request a new OTP.');
 		isValid = false;
 	}
 
@@ -199,7 +232,47 @@ function setStatus(message, type) {
 	}
 }
 
-[fullNameInput, emailInput, otpInput].forEach((input) => {
+function formatTimer(ms) {
+	const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
+	const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+	const seconds = String(totalSeconds % 60).padStart(2, '0');
+	return `${minutes}:${seconds}`;
+}
+
+function stopOtpTimer() {
+	if (otpTimerInterval) {
+		clearInterval(otpTimerInterval);
+		otpTimerInterval = null;
+	}
+}
+
+function startOtpTimer(durationMs = OTP_WINDOW_MS) {
+	stopOtpTimer();
+	otpDeadline = Date.now() + durationMs;
+
+	const tick = () => {
+		const remaining = otpDeadline - Date.now();
+		if (remaining <= 0) {
+			otpTimer.textContent = 'OTP expired';
+			stopOtpTimer();
+			return;
+		}
+		otpTimer.textContent = `OTP valid for ${formatTimer(remaining)}`;
+	};
+
+	tick();
+	otpTimerInterval = setInterval(tick, 250);
+}
+
+togglePasswordButton.addEventListener('click', () => {
+	const isHidden = passwordInput.type === 'password';
+	passwordInput.type = isHidden ? 'text' : 'password';
+	confirmPasswordInput.type = isHidden ? 'text' : 'password';
+	togglePasswordButton.textContent = isHidden ? 'Hide' : 'Show';
+	togglePasswordButton.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+});
+
+[fullNameInput, emailInput, otpInput, passwordInput, confirmPasswordInput].forEach((input) => {
 	input.addEventListener('input', () => {
 		if (input === fullNameInput) {
 			clearFieldError(fullNameInput, nameError);
@@ -209,6 +282,12 @@ function setStatus(message, type) {
 		}
 		if (input === otpInput) {
 			clearFieldError(otpInput, otpError);
+		}
+		if (input === passwordInput) {
+			clearFieldError(passwordInput, passwordError);
+		}
+		if (input === confirmPasswordInput) {
+			clearFieldError(confirmPasswordInput, confirmPasswordError);
 		}
 		setStatus('', null);
 	});
@@ -222,9 +301,13 @@ agreeTermsInput.addEventListener('change', () => {
 sendOtpButton.addEventListener('click', async () => {
 	const fullName = fullNameInput.value.trim();
 	const email = emailInput.value.trim().toLowerCase();
+	const password = passwordInput.value;
+	const confirmPassword = confirmPasswordInput.value;
 
 	clearFieldError(fullNameInput, nameError);
 	clearFieldError(emailInput, emailError);
+	clearFieldError(passwordInput, passwordError);
+	clearFieldError(confirmPasswordInput, confirmPasswordError);
 
 	if (!fullName || fullName.length < 2) {
 		showFieldError(fullNameInput, nameError, 'Please enter your full name.');
@@ -241,6 +324,21 @@ sendOtpButton.addEventListener('click', async () => {
 		return;
 	}
 
+	if (!password) {
+		showFieldError(passwordInput, passwordError, 'Please create a password.');
+		return;
+	}
+
+	if (password.length < 8) {
+		showFieldError(passwordInput, passwordError, 'Password must be at least 8 characters long.');
+		return;
+	}
+
+	if (confirmPassword !== password) {
+		showFieldError(confirmPasswordInput, confirmPasswordError, 'Passwords do not match.');
+		return;
+	}
+
 	sendOtpButton.disabled = true;
 	setStatus('Sending OTP to your email...', null);
 
@@ -251,7 +349,7 @@ sendOtpButton.addEventListener('click', async () => {
 			body: JSON.stringify({
 				email,
 				full_name: fullName,
-				create_user: true,
+				password,
 			}),
 		});
 
@@ -261,7 +359,8 @@ sendOtpButton.addEventListener('click', async () => {
 		}
 
 		otpSentForEmail = email;
-		setStatus('OTP sent. Check your inbox and enter it below.', 'success');
+		startOtpTimer(OTP_WINDOW_MS);
+		setStatus('OTP sent. You have 5 minutes to verify.', 'success');
 		otpInput.focus();
 	} catch (error) {
 		setStatus(error.message || 'Unable to send OTP right now.', 'error');
@@ -284,6 +383,10 @@ signinForm.addEventListener('submit', async (event) => {
 	try {
 		const email = emailInput.value.trim().toLowerCase();
 		const otp = otpInput.value.trim();
+
+		if (!otpDeadline || Date.now() > otpDeadline) {
+			throw new Error('OTP expired. Please request a new OTP.');
+		}
 
 		if (otpSentForEmail && otpSentForEmail !== email) {
 			throw new Error('Email changed after OTP send. Please send OTP again.');
@@ -315,6 +418,10 @@ signinForm.addEventListener('submit', async (event) => {
 			localStorage.setItem('access_token', payload.access_token);
 		}
 
+		stopOtpTimer();
+		otpTimer.textContent = '';
+		otpDeadline = 0;
+
 		setStatus('Account verified. Redirecting...', 'success');
 		window.location.href = HOME_PAGE_URL;
 	} catch (error) {
@@ -332,3 +439,4 @@ themeToggle.addEventListener('click', () => {
 applySavedTheme();
 initMathBackground();
 window.addEventListener('resize', initMathBackground);
+window.addEventListener('beforeunload', stopOtpTimer);

@@ -33,7 +33,7 @@
 
 		<section class="form-panel" aria-label="Create account form">
 			<h2>Sign up</h2>
-			<p class="panel-subtitle">Enter your details and verify OTP.</p>
+			<p class="panel-subtitle">Enter your details, set password, and verify OTP.</p>
 
 			<form id="signinForm" novalidate>
 				<div class="field-wrap">
@@ -54,8 +54,24 @@
 					<small class="field-error" id="otpError" aria-live="polite"></small>
 				</div>
 
+				<div class="field-wrap">
+					<label for="password">Password</label>
+					<div class="password-row">
+						<input id="password" name="password" type="password" autocomplete="new-password" placeholder="Minimum 8 characters" minlength="8" required>
+						<button class="text-button" id="togglePassword" type="button" aria-label="Show password">Show</button>
+					</div>
+					<small class="field-error" id="passwordError" aria-live="polite"></small>
+				</div>
+
+				<div class="field-wrap">
+					<label for="confirmPassword">Confirm password</label>
+					<input id="confirmPassword" name="confirmPassword" type="password" autocomplete="new-password" placeholder="Re-enter password" minlength="8" required>
+					<small class="field-error" id="confirmPasswordError" aria-live="polite"></small>
+				</div>
+
 				<div class="form-meta">
 					<button class="text-button" id="sendOtpButton" type="button">Send OTP</button>
+					<span class="status-text" id="otpTimer" aria-live="polite"></span>
 				</div>
 
 				<label class="checkbox-wrap" for="agreeTerms">
@@ -64,7 +80,7 @@
 				</label>
 				<small class="field-error" id="termsError" aria-live="polite"></small>
 
-				<button class="primary-btn" id="signinButton" type="submit">Verify OTP</button>
+				<button class="primary-btn" id="signinButton" type="submit">Create account</button>
 				<p class="status-text" id="statusText" aria-live="polite"></p>
 			</form>
 

@@ -29,6 +29,8 @@ if not SUPABASE_URL or not SUPABASE_KEY:
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 app = fastapi.FastAPI(title="H4T Auth Service")
+SIGNUP_OTP_WINDOW_SECONDS = 300
+PENDING_SIGNUPS: dict[str, dict] = {}
 
 app.add_middleware(
     CORSMiddleware,
@@ -86,6 +88,17 @@ def _user_payload(user: dict) -> dict:
         "email": email,
         "full_name": full_name,
     }
+
+
+def _cleanup_pending_signups() -> None:
+    now = time.time()
+    expired_emails = [
+        email
+        for email, payload in PENDING_SIGNUPS.items()
+        if payload.get("expires_at", 0) <= now
+    ]
+    for email in expired_emails:
+        PENDING_SIGNUPS.pop(email, None)
 
 
 @app.post("/signup")
@@ -183,6 +196,102 @@ def send_otp(payload: dict = Body(...)):
         raise fastapi.HTTPException(status_code=400, detail=f"Failed to send OTP: {exc}") from exc
 
     return {"message": "OTP sent"}
+
+
+@app.post("/signup/send-otp")
+def send_signup_otp(payload: dict = Body(...)):
+    _cleanup_pending_signups()
+
+    full_name = (payload.get("full_name") or "").strip()
+    email = (payload.get("email") or "").strip().lower()
+    password = payload.get("password") or ""
+
+    if not full_name or not email or not password:
+        raise fastapi.HTTPException(status_code=400, detail="full_name, email and password are required.")
+    if len(password) < 8:
+        raise fastapi.HTTPException(status_code=400, detail="Password must be at least 8 characters.")
+
+    expires_at = time.time() + SIGNUP_OTP_WINDOW_SECONDS
+    PENDING_SIGNUPS[email] = {
+        "full_name": full_name,
+        "password": password,
+        "expires_at": expires_at,
+    }
+
+    try:
+        supabase.auth.sign_in_with_otp({
+            "email": email,
+            "options": {
+                "should_create_user": True,
+                "data": {"full_name": full_name},
+            },
+        })
+    except Exception as exc:
+        PENDING_SIGNUPS.pop(email, None)
+        raise fastapi.HTTPException(status_code=400, detail=f"Failed to send signup OTP: {exc}") from exc
+
+    return {
+        "message": "OTP sent",
+        "expires_in": SIGNUP_OTP_WINDOW_SECONDS,
+    }
+
+
+@app.post("/signup/verify-otp")
+def verify_signup_otp(payload: dict = Body(...)):
+    _cleanup_pending_signups()
+
+    email = (payload.get("email") or "").strip().lower()
+    token = (payload.get("token") or "").strip()
+
+    if not email or not token:
+        raise fastapi.HTTPException(status_code=400, detail="email and token are required.")
+
+    pending = PENDING_SIGNUPS.get(email)
+    if not pending:
+        raise fastapi.HTTPException(status_code=400, detail="Signup OTP expired. Please request OTP again.")
+
+    if pending.get("expires_at", 0) <= time.time():
+        PENDING_SIGNUPS.pop(email, None)
+        raise fastapi.HTTPException(status_code=400, detail="Signup OTP expired. Please request OTP again.")
+
+    try:
+        verify_response = supabase.auth.verify_otp({
+            "email": email,
+            "token": token,
+            "type": "email",
+        })
+    except Exception as exc:
+        raise fastapi.HTTPException(status_code=401, detail=f"Invalid OTP: {exc}") from exc
+
+    session = getattr(verify_response, "session", None)
+    if not session or not getattr(session, "access_token", None):
+        raise fastapi.HTTPException(status_code=401, detail="Invalid OTP")
+
+    user = _extract_user_from_auth_response(verify_response)
+
+    try:
+        admin_api = getattr(supabase.auth, "admin", None)
+        if admin_api and hasattr(admin_api, "update_user_by_id"):
+            admin_api.update_user_by_id(
+                user.get("id"),
+                {
+                    "password": pending["password"],
+                    "user_metadata": {"full_name": pending["full_name"]},
+                },
+            )
+        else:
+            raise RuntimeError("Supabase admin API unavailable for password update.")
+    except Exception as exc:
+        raise fastapi.HTTPException(status_code=500, detail=f"OTP verified, but password setup failed: {exc}") from exc
+    finally:
+        PENDING_SIGNUPS.pop(email, None)
+
+    return {
+        "access_token": session.access_token,
+        "refresh_token": getattr(session, "refresh_token", None),
+        "user": _user_payload(user),
+        "message": "Signup successful",
+    }
 
 
 @app.post("/verify-otp")
