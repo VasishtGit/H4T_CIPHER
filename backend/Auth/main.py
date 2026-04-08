@@ -180,7 +180,7 @@ def me(request: fastapi.Request):
 
 @app.get("/")
 async def root():
-    return {"message": time.strftime("Hello! The server is up and running at %Y-%m-%d %H:%M:%S")}
+    return {"message": "ok"}
 
 @app.api_route("/health", methods=["GET", "HEAD"])
 async def health_check():
