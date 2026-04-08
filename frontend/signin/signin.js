@@ -1,26 +1,27 @@
 const signinForm = document.getElementById('signinForm');
 const fullNameInput = document.getElementById('fullName');
 const emailInput = document.getElementById('email');
-const passwordInput = document.getElementById('password');
-const confirmPasswordInput = document.getElementById('confirmPassword');
+const otpInput = document.getElementById('otp');
+const sendOtpButton = document.getElementById('sendOtpButton');
 const agreeTermsInput = document.getElementById('agreeTerms');
-const togglePasswordButton = document.getElementById('togglePassword');
 const themeToggle = document.getElementById('themeToggle');
 const mathBackground = document.getElementById('mathBackground');
 const signinButton = document.getElementById('signinButton');
 const statusText = document.getElementById('statusText');
 const nameError = document.getElementById('nameError');
 const emailError = document.getElementById('emailError');
-const passwordError = document.getElementById('passwordError');
-const confirmPasswordError = document.getElementById('confirmPasswordError');
+const otpError = document.getElementById('otpError');
 const termsError = document.getElementById('termsError');
 
 let hasParallaxListener = false;
 
 const AUTH_BASE_URL = 'https://h4t-cipher-1.onrender.com';
-const SIGNUP_API_URL = `${AUTH_BASE_URL}/signup`;
+const SEND_OTP_API_URL = `${AUTH_BASE_URL}/send-otp`;
+const VERIFY_OTP_API_URL = `${AUTH_BASE_URL}/verify-otp`;
 const LOGIN_PAGE_URL = '../login/login.html';
+const HOME_PAGE_URL = '../homepage/homepage.html';
 const TOKEN_KEY = 'token';
+let otpSentForEmail = '';
 
 const mathSvgTemplates = [
 	`<svg viewBox="0 0 220 140" preserveAspectRatio="none" aria-hidden="true">
@@ -154,13 +155,11 @@ function validateForm() {
 	let isValid = true;
 	const fullName = fullNameInput.value.trim();
 	const email = emailInput.value.trim();
-	const password = passwordInput.value;
-	const confirmPassword = confirmPasswordInput.value;
+	const otp = otpInput.value.trim();
 
 	clearFieldError(fullNameInput, nameError);
 	clearFieldError(emailInput, emailError);
-	clearFieldError(passwordInput, passwordError);
-	clearFieldError(confirmPasswordInput, confirmPasswordError);
+	clearFieldError(otpInput, otpError);
 	clearFieldError(agreeTermsInput, termsError);
 
 	if (!fullName || fullName.length < 2) {
@@ -176,19 +175,11 @@ function validateForm() {
 		isValid = false;
 	}
 
-	if (!password) {
-		showFieldError(passwordInput, passwordError, 'Please create a password.');
+	if (!otp) {
+		showFieldError(otpInput, otpError, 'Please enter OTP from your email.');
 		isValid = false;
-	} else if (password.length < 8) {
-		showFieldError(passwordInput, passwordError, 'Password must be at least 8 characters long.');
-		isValid = false;
-	}
-
-	if (!confirmPassword) {
-		showFieldError(confirmPasswordInput, confirmPasswordError, 'Please confirm your password.');
-		isValid = false;
-	} else if (confirmPassword !== password) {
-		showFieldError(confirmPasswordInput, confirmPasswordError, 'Passwords do not match.');
+	} else if (!/^\d{4,8}$/.test(otp)) {
+		showFieldError(otpInput, otpError, 'OTP must be 4 to 8 digits.');
 		isValid = false;
 	}
 
@@ -208,16 +199,17 @@ function setStatus(message, type) {
 	}
 }
 
-togglePasswordButton.addEventListener('click', () => {
-	const isHidden = passwordInput.type === 'password';
-	passwordInput.type = isHidden ? 'text' : 'password';
-	confirmPasswordInput.type = isHidden ? 'text' : 'password';
-	togglePasswordButton.textContent = isHidden ? 'Hide' : 'Show';
-	togglePasswordButton.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
-});
-
-[fullNameInput, emailInput, passwordInput, confirmPasswordInput].forEach((input) => {
+[fullNameInput, emailInput, otpInput].forEach((input) => {
 	input.addEventListener('input', () => {
+		if (input === fullNameInput) {
+			clearFieldError(fullNameInput, nameError);
+		}
+		if (input === emailInput) {
+			clearFieldError(emailInput, emailError);
+		}
+		if (input === otpInput) {
+			clearFieldError(otpInput, otpError);
+		}
 		setStatus('', null);
 	});
 });
@@ -225,6 +217,57 @@ togglePasswordButton.addEventListener('click', () => {
 agreeTermsInput.addEventListener('change', () => {
 	clearFieldError(agreeTermsInput, termsError);
 	setStatus('', null);
+});
+
+sendOtpButton.addEventListener('click', async () => {
+	const fullName = fullNameInput.value.trim();
+	const email = emailInput.value.trim().toLowerCase();
+
+	clearFieldError(fullNameInput, nameError);
+	clearFieldError(emailInput, emailError);
+
+	if (!fullName || fullName.length < 2) {
+		showFieldError(fullNameInput, nameError, 'Please enter your full name.');
+		return;
+	}
+
+	if (!email) {
+		showFieldError(emailInput, emailError, 'Please enter your email address.');
+		return;
+	}
+
+	if (!validateEmail(email)) {
+		showFieldError(emailInput, emailError, 'Please enter a valid email address.');
+		return;
+	}
+
+	sendOtpButton.disabled = true;
+	setStatus('Sending OTP to your email...', null);
+
+	try {
+		const response = await fetch(SEND_OTP_API_URL, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				email,
+				full_name: fullName,
+				create_user: true,
+			}),
+		});
+
+		const payload = await response.json().catch(() => ({}));
+		if (!response.ok) {
+			throw new Error(payload.detail || 'Failed to send OTP.');
+		}
+
+		otpSentForEmail = email;
+		setStatus('OTP sent. Check your inbox and enter it below.', 'success');
+		otpInput.focus();
+	} catch (error) {
+		setStatus(error.message || 'Unable to send OTP right now.', 'error');
+	} finally {
+		sendOtpButton.disabled = false;
+	}
 });
 
 signinForm.addEventListener('submit', async (event) => {
@@ -236,17 +279,23 @@ signinForm.addEventListener('submit', async (event) => {
 	}
 
 	signinButton.disabled = true;
-	setStatus('Creating your account...', null);
+	setStatus('Verifying OTP...', null);
 
 	try {
-		const response = await fetch(SIGNUP_API_URL, {
+		const email = emailInput.value.trim().toLowerCase();
+		const otp = otpInput.value.trim();
+
+		if (otpSentForEmail && otpSentForEmail !== email) {
+			throw new Error('Email changed after OTP send. Please send OTP again.');
+		}
+
+		const response = await fetch(VERIFY_OTP_API_URL, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			credentials: 'include',
 			body: JSON.stringify({
-				full_name: fullNameInput.value.trim(),
-				email: emailInput.value.trim(),
-				password: passwordInput.value,
+				email,
+				token: otp,
+				type: 'email',
 			}),
 		});
 
@@ -263,12 +312,11 @@ signinForm.addEventListener('submit', async (event) => {
 
 		if (payload.access_token) {
 			localStorage.setItem(TOKEN_KEY, payload.access_token);
+			localStorage.setItem('access_token', payload.access_token);
 		}
 
-		setStatus('Account created. Redirecting to login...', 'success');
-		setTimeout(() => {
-			window.location.href = LOGIN_PAGE_URL;
-		}, 600);
+		setStatus('Account verified. Redirecting...', 'success');
+		window.location.href = HOME_PAGE_URL;
 	} catch (error) {
 		setStatus(error.message || 'Unable to create account right now.', 'error');
 		signinButton.disabled = false;

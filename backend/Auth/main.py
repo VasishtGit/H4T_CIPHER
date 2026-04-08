@@ -159,6 +159,63 @@ def login(payload: dict = Body(...)):
     }
 
 
+@app.post("/send-otp")
+def send_otp(payload: dict = Body(...)):
+    email = (payload.get("email") or "").strip().lower()
+    full_name = (payload.get("full_name") or "").strip()
+    create_user = payload.get("create_user")
+
+    if not email:
+        raise fastapi.HTTPException(status_code=400, detail="email is required.")
+
+    otp_payload = {
+        "email": email,
+        "options": {
+            "should_create_user": True if create_user is None else bool(create_user),
+        },
+    }
+    if full_name:
+        otp_payload["options"]["data"] = {"full_name": full_name}
+
+    try:
+        supabase.auth.sign_in_with_otp(otp_payload)
+    except Exception as exc:
+        raise fastapi.HTTPException(status_code=400, detail=f"Failed to send OTP: {exc}") from exc
+
+    return {"message": "OTP sent"}
+
+
+@app.post("/verify-otp")
+def verify_otp(payload: dict = Body(...)):
+    email = (payload.get("email") or "").strip().lower()
+    token = (payload.get("token") or "").strip()
+    token_type = (payload.get("type") or "email").strip() or "email"
+
+    if not email or not token:
+        raise fastapi.HTTPException(status_code=400, detail="email and token are required.")
+
+    try:
+        verify_response = supabase.auth.verify_otp({
+            "email": email,
+            "token": token,
+            "type": token_type,
+        })
+    except Exception as exc:
+        raise fastapi.HTTPException(status_code=401, detail=f"Invalid OTP: {exc}") from exc
+
+    session = getattr(verify_response, "session", None)
+    if not session or not getattr(session, "access_token", None):
+        raise fastapi.HTTPException(status_code=401, detail="Invalid OTP")
+
+    user = _extract_user_from_auth_response(verify_response)
+    return {
+        "access_token": session.access_token,
+        "refresh_token": getattr(session, "refresh_token", None),
+        "user": _user_payload(user),
+        "message": "OTP verified",
+    }
+
+
 @app.post("/logout")
 def logout():
     response = fastapi.responses.JSONResponse({"message": "Logged out"})

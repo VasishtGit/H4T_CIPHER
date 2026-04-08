@@ -1,33 +1,19 @@
 :root {
-	--bg-1: #081120;
-	--bg-2: #0f172a;
-	--orb-1: rgba(96, 165, 250, 0.2);
-	--orb-2: rgba(124, 58, 237, 0.18);
-	--text: #f8fafc;
+	--bg-deep: #0b1220;
+	--bg-mid: #10203a;
+	--bg-orb-1: rgba(96, 165, 250, 0.24);
+	--bg-orb-2: rgba(124, 58, 237, 0.22);
+	--bg-orb-3: rgba(56, 189, 248, 0.18);
+	--line-overlay: rgba(255, 255, 255, 0.03);
+	--text: #e6edf8;
 	--muted: rgba(226, 232, 240, 0.78);
-	--card-bg: rgba(15, 23, 42, 0.72);
-	--card-border: rgba(255, 255, 255, 0.14);
-	--shadow: 0 18px 48px rgba(2, 6, 23, 0.45);
+	--card-bg: rgba(11, 18, 32, 0.66);
+	--card-border: rgba(148, 163, 184, 0.24);
+	--shadow: 0 24px 48px rgba(2, 6, 23, 0.4);
 	--accent: linear-gradient(135deg, #38bdf8, #2563eb);
 	--bot-msg: rgba(148, 163, 184, 0.16);
 	--user-msg: linear-gradient(135deg, rgba(56, 189, 248, 0.92), rgba(99, 102, 241, 0.9));
-	--input-bg: rgba(15, 23, 42, 0.62);
-}
-
-body.light-theme {
-	--bg-1: #e9f2ff;
-	--bg-2: #f8fbff;
-	--orb-1: rgba(37, 99, 235, 0.14);
-	--orb-2: rgba(14, 165, 233, 0.14);
-	--text: #0f172a;
-	--muted: rgba(15, 23, 42, 0.66);
-	--card-bg: rgba(255, 255, 255, 0.86);
-	--card-border: rgba(15, 23, 42, 0.12);
-	--shadow: 0 16px 42px rgba(15, 23, 42, 0.14);
-	--accent: linear-gradient(135deg, #2563eb, #0ea5e9);
-	--bot-msg: rgba(37, 99, 235, 0.1);
-	--user-msg: linear-gradient(135deg, #2563eb, #0ea5e9);
-	--input-bg: rgba(226, 232, 240, 0.6);
+	--input-bg: rgba(15, 23, 42, 0.56);
 }
 
 * {
@@ -41,12 +27,27 @@ body {
 }
 
 body {
-	font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+	font-family: "Space Grotesk", "Segoe UI", sans-serif;
 	color: var(--text);
 	background:
-		radial-gradient(circle at 20% 20%, var(--orb-1), transparent 30%),
-		radial-gradient(circle at 85% 15%, var(--orb-2), transparent 28%),
-		linear-gradient(150deg, var(--bg-1), var(--bg-2));
+		radial-gradient(circle at 20% 20%, var(--bg-orb-1), transparent 28%),
+		radial-gradient(circle at 80% 20%, var(--bg-orb-2), transparent 26%),
+		radial-gradient(circle at 50% 80%, var(--bg-orb-3), transparent 30%),
+		linear-gradient(160deg, var(--bg-deep), var(--bg-mid));
+	overflow: hidden;
+}
+
+body::before {
+	content: "";
+	position: fixed;
+	inset: 0;
+	background-image:
+		linear-gradient(var(--line-overlay) 1px, transparent 1px),
+		linear-gradient(90deg, var(--line-overlay) 1px, transparent 1px);
+	background-size: 72px 72px;
+	mask-image: radial-gradient(circle at center, black 45%, transparent 100%);
+	pointer-events: none;
+	z-index: 0;
 }
 
 .back-link {
@@ -100,7 +101,7 @@ body {
 	bottom: 82px;
 	width: min(380px, calc(100vw - 24px));
 	height: min(560px, calc(100vh - 120px));
-	border-radius: 20px;
+	border-radius: 24px;
 	border: 1px solid var(--card-border);
 	background: var(--card-bg);
 	backdrop-filter: blur(14px);
@@ -156,6 +157,7 @@ body {
 	margin: 2px 0 0;
 	font-size: 0.74rem;
 	color: var(--muted);
+	font-family: Manrope, "Segoe UI", sans-serif;
 }
 
 .chat-close {
@@ -174,6 +176,7 @@ body {
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
+	font-family: Manrope, "Segoe UI", sans-serif;
 }
 
 .message {
@@ -261,6 +264,11 @@ body {
 	padding: 10px 12px;
 	font: inherit;
 	outline: none;
+}
+
+#chatInput:focus {
+	border-color: rgba(56, 189, 248, 0.7);
+	box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.16);
 }
 
 #chatInput::placeholder {

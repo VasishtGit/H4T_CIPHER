@@ -1,21 +1,22 @@
 const loginForm = document.getElementById('loginForm');
 const emailInput = document.getElementById('email');
-const passwordInput = document.getElementById('password');
-const rememberMeInput = document.getElementById('rememberMe');
-const togglePasswordButton = document.getElementById('togglePassword');
+const otpInput = document.getElementById('otp');
+const sendOtpButton = document.getElementById('sendOtpButton');
 const themeToggle = document.getElementById('themeToggle');
 const mathBackground = document.getElementById('mathBackground');
 const loginButton = document.getElementById('loginButton');
 const statusText = document.getElementById('statusText');
 const emailError = document.getElementById('emailError');
-const passwordError = document.getElementById('passwordError');
+const otpError = document.getElementById('otpError');
 let hasParallaxListener = false;
 
 const AUTH_BASE_URL = 'https://h4t-cipher-1.onrender.com';
-const LOGIN_API_URL = `${AUTH_BASE_URL}/login`;
+const SEND_OTP_API_URL = `${AUTH_BASE_URL}/send-otp`;
+const VERIFY_OTP_API_URL = `${AUTH_BASE_URL}/verify-otp`;
 const ME_API_URL = `${AUTH_BASE_URL}/me`;
 const HOME_PAGE_URL = '../homepage/homepage.html';
 const TOKEN_KEY = 'token';
+let otpSentForEmail = '';
 
 function getAuthHeaders() {
 	const token = localStorage.getItem(TOKEN_KEY);
@@ -153,10 +154,10 @@ function validateEmail(value) {
 function validateForm() {
 	let isValid = true;
 	const email = emailInput.value.trim();
-	const password = passwordInput.value;
+	const otp = otpInput.value.trim();
 
 	clearFieldError(emailInput, emailError);
-	clearFieldError(passwordInput, passwordError);
+	clearFieldError(otpInput, otpError);
 
 	if (!email) {
 		showFieldError(emailInput, emailError, 'Please enter your email address.');
@@ -166,11 +167,11 @@ function validateForm() {
 		isValid = false;
 	}
 
-	if (!password) {
-		showFieldError(passwordInput, passwordError, 'Please enter your password.');
+	if (!otp) {
+		showFieldError(otpInput, otpError, 'Please enter OTP from your email.');
 		isValid = false;
-	} else if (password.length < 8) {
-		showFieldError(passwordInput, passwordError, 'Password must be at least 8 characters long.');
+	} else if (!/^\d{4,8}$/.test(otp)) {
+		showFieldError(otpInput, otpError, 'OTP must be 4 to 8 digits.');
 		isValid = false;
 	}
 
@@ -185,23 +186,59 @@ function setStatus(message, type) {
 	}
 }
 
-togglePasswordButton.addEventListener('click', () => {
-	const isHidden = passwordInput.type === 'password';
-	passwordInput.type = isHidden ? 'text' : 'password';
-	togglePasswordButton.textContent = isHidden ? 'Hide' : 'Show';
-	togglePasswordButton.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
-});
-
-[emailInput, passwordInput].forEach((input) => {
+[emailInput, otpInput].forEach((input) => {
 	input.addEventListener('input', () => {
 		if (input === emailInput) {
 			clearFieldError(emailInput, emailError);
 		}
-		if (input === passwordInput) {
-			clearFieldError(passwordInput, passwordError);
+		if (input === otpInput) {
+			clearFieldError(otpInput, otpError);
 		}
 		setStatus('', null);
 	});
+});
+
+sendOtpButton.addEventListener('click', async () => {
+	const email = emailInput.value.trim().toLowerCase();
+	clearFieldError(emailInput, emailError);
+	clearFieldError(otpInput, otpError);
+
+	if (!email) {
+		showFieldError(emailInput, emailError, 'Please enter your email address.');
+		return;
+	}
+
+	if (!validateEmail(email)) {
+		showFieldError(emailInput, emailError, 'Please enter a valid email address.');
+		return;
+	}
+
+	sendOtpButton.disabled = true;
+	setStatus('Sending OTP to your email...', null);
+
+	try {
+		const response = await fetch(SEND_OTP_API_URL, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				email,
+				create_user: true,
+			}),
+		});
+
+		const payload = await response.json().catch(() => ({}));
+		if (!response.ok) {
+			throw new Error(payload.detail || 'Failed to send OTP.');
+		}
+
+		otpSentForEmail = email;
+		setStatus('OTP sent. Check your inbox and enter it below.', 'success');
+		otpInput.focus();
+	} catch (error) {
+		setStatus(error.message || 'Unable to send OTP right now.', 'error');
+	} finally {
+		sendOtpButton.disabled = false;
+	}
 });
 
 loginForm.addEventListener('submit', async (event) => {
@@ -213,16 +250,23 @@ loginForm.addEventListener('submit', async (event) => {
 	}
 
 	loginButton.disabled = true;
-	setStatus('Signing you in...', null);
+	setStatus('Verifying OTP...', null);
 
 	try {
-		const response = await fetch(LOGIN_API_URL, {
+		const email = emailInput.value.trim().toLowerCase();
+		const otp = otpInput.value.trim();
+
+		if (otpSentForEmail && otpSentForEmail !== email) {
+			throw new Error('Email changed after OTP send. Please send OTP again.');
+		}
+
+		const response = await fetch(VERIFY_OTP_API_URL, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			credentials: 'include',
 			body: JSON.stringify({
-				email: emailInput.value.trim(),
-				password: passwordInput.value,
+				email,
+				token: otp,
+				type: 'email',
 			}),
 		});
 
@@ -239,12 +283,7 @@ loginForm.addEventListener('submit', async (event) => {
 
 		if (payload.access_token) {
 			localStorage.setItem(TOKEN_KEY, payload.access_token);
-		}
-
-		if (rememberMeInput.checked) {
-			localStorage.setItem('rememberedEmail', emailInput.value.trim());
-		} else {
-			localStorage.removeItem('rememberedEmail');
+			localStorage.setItem('access_token', payload.access_token);
 		}
 
 		setStatus('Login successful. Redirecting...', 'success');
@@ -268,7 +307,6 @@ function applyRememberedEmail() {
 	}
 
 	emailInput.value = rememberedEmail;
-	rememberMeInput.checked = true;
 }
 
 applyRememberedEmail();

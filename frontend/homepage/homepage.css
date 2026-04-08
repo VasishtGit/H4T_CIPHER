@@ -1,59 +1,111 @@
+:root {
+	--bg-deep: #0b1220;
+	--bg-mid: #10203a;
+	--bg-orb-1: rgba(96, 165, 250, 0.24);
+	--bg-orb-2: rgba(124, 58, 237, 0.22);
+	--bg-orb-3: rgba(56, 189, 248, 0.18);
+	--ink: #e6edf8;
+	--muted: rgba(230, 237, 248, 0.74);
+	--card: rgba(11, 18, 32, 0.66);
+	--card-border: rgba(148, 163, 184, 0.24);
+	--input-bg: rgba(15, 23, 42, 0.56);
+	--input-border: rgba(148, 163, 184, 0.34);
+	--line-overlay: rgba(255, 255, 255, 0.03);
+	--btn-bg: linear-gradient(135deg, #38bdf8, #2563eb);
+	--btn-hover: linear-gradient(135deg, #22d3ee, #1d4ed8);
+	--danger: #fca5a5;
+	--ok: #86efac;
+}
+
 * {
 	box-sizing: border-box;
 }
 
 html,
 body {
-	height: 100%;
 	margin: 0;
+	min-height: 100%;
 }
 
 body {
-	font-family: "Segoe UI", Tahoma, sans-serif;
-	background: #f3f4f6;
-	color: #111827;
+	font-family: "Space Grotesk", "Segoe UI", sans-serif;
+	color: var(--ink);
+	background:
+		radial-gradient(circle at 20% 20%, var(--bg-orb-1), transparent 28%),
+		radial-gradient(circle at 80% 20%, var(--bg-orb-2), transparent 26%),
+		radial-gradient(circle at 50% 80%, var(--bg-orb-3), transparent 30%),
+		linear-gradient(160deg, var(--bg-deep), var(--bg-mid));
 	display: grid;
 	place-items: center;
-	padding: 16px;
+	padding: 18px;
+	overflow-x: hidden;
+}
+
+body::before {
+	content: "";
+	position: fixed;
+	inset: 0;
+	background-image:
+		linear-gradient(var(--line-overlay) 1px, transparent 1px),
+		linear-gradient(90deg, var(--line-overlay) 1px, transparent 1px);
+	background-size: 72px 72px;
+	mask-image: radial-gradient(circle at center, black 45%, transparent 100%);
+	pointer-events: none;
+	z-index: 0;
 }
 
 .container {
-	width: 100%;
-	max-width: 560px;
-	background: #ffffff;
-	border: 1px solid #d1d5db;
-	border-radius: 8px;
-	padding: 20px;
+	position: relative;
+	z-index: 1;
+	width: min(560px, 100%);
+	background: var(--card);
+	border: 1px solid var(--card-border);
+	border-radius: 24px;
+	backdrop-filter: blur(14px);
+	-webkit-backdrop-filter: blur(14px);
+	box-shadow: 0 24px 48px rgba(2, 6, 23, 0.4);
+	padding: 24px;
 }
 
 .topbar {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	margin-bottom: 14px;
-	padding-bottom: 10px;
-	border-bottom: 1px solid #e5e7eb;
-	font-size: 0.9rem;
-	color: #374151;
+	margin-bottom: 16px;
+	padding-bottom: 12px;
+	border-bottom: 1px solid var(--card-border);
+	font-size: 0.92rem;
+	color: var(--muted);
 }
 
 #logoutButton {
 	font: inherit;
-	padding: 6px 10px;
-	border: 1px solid #9ca3af;
-	border-radius: 6px;
-	background: #f3f4f6;
+	font-weight: 600;
+	padding: 8px 12px;
+	border: 1px solid var(--input-border);
+	border-radius: 10px;
+	background: var(--input-bg);
+	color: var(--ink);
 	cursor: pointer;
+	transition: transform 160ms ease, filter 160ms ease;
+}
+
+#logoutButton:hover {
+	transform: translateY(-1px);
+	filter: brightness(1.06);
 }
 
 h1 {
 	margin: 0 0 8px;
-	font-size: 1.5rem;
+	font-size: clamp(1.7rem, 4.2vw, 2.2rem);
+	line-height: 1.08;
 }
 
 .hint {
 	margin: 0 0 16px;
-	color: #4b5563;
+	color: var(--muted);
+	font-family: Manrope, "Segoe UI", sans-serif;
+	line-height: 1.6;
 }
 
 .upload-form {
@@ -63,49 +115,49 @@ h1 {
 
 #imageInput {
 	font: inherit;
+	padding: 10px 12px;
+	border-radius: 10px;
+	border: 1px solid var(--input-border);
+	background: var(--input-bg);
+	color: var(--ink);
 }
 
 #uploadButton {
 	font: inherit;
+	font-weight: 700;
 	padding: 10px 14px;
-	border: 1px solid #9ca3af;
-	border-radius: 6px;
-	background: #e5e7eb;
+	border: 0;
+	border-radius: 10px;
+	background: var(--btn-bg);
+	color: #ffffff;
 	cursor: pointer;
+	transition: transform 160ms ease, filter 160ms ease, background 200ms ease;
+}
+
+#uploadButton:hover:enabled {
+	transform: translateY(-1px);
+	background: var(--btn-hover);
+	filter: brightness(1.03);
 }
 
 #uploadButton:disabled {
 	opacity: 0.65;
 	cursor: not-allowed;
+	transform: none;
 }
 
 .status {
 	margin-top: 14px;
 	min-height: 1.2em;
 	font-size: 0.95rem;
-	color: #1f2937;
+	color: var(--ink);
+	font-family: Manrope, "Segoe UI", sans-serif;
 }
 
-.response {
-	margin-top: 12px;
-	padding: 10px;
-	border: 1px solid #e5e7eb;
-	border-radius: 6px;
-	background: #f9fafb;
-	white-space: pre-wrap;
-	word-break: break-word;
-	min-height: 64px;
+.status.error {
+	color: var(--danger);
 }
 
-.video-section {
-	margin-top: 14px;
-	padding: 10px;
-	border: 1px solid #e5e7eb;
-	border-radius: 6px;
-	background: #f9fafb;
-}
-
-.video-section h2 {
-	margin: 0 0 8px;
-	font-size: 1.1rem;
+.status.success {
+	color: var(--ok);
 }
