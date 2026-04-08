@@ -423,7 +423,7 @@ def stream_video():
     # Fallback for local playback when Supabase URL is unavailable.
     return FileResponse(LATEST_VIDEO_PATH, media_type="video/mp4")
 
-@app.get("/", methods=["GET", "HEAD"])
+@app.get("/")
 async def root():
     return {"status": "ok"}
 
