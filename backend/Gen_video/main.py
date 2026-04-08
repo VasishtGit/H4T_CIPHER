@@ -6,6 +6,7 @@ import httpx
 import base64
 import os
 import time
+import threading
 import uuid
 from typing import Any
 from dotenv import load_dotenv
@@ -205,6 +206,42 @@ LATEST_VIDEO_PATH = None
 LATEST_VIDEO_URL = None
 
 
+def process_video_job(request_id, generated_code, user_id, explanation, graph_url, base_url):
+    global LATEST_VIDEO_PATH, LATEST_VIDEO_URL
+
+    try:
+        video_path = execute_manim_code(generated_code, allow_safe_fallback_scene=False)
+
+        LATEST_VIDEO_PATH = video_path
+        LATEST_VIDEO_URL = None
+
+        try:
+            uploaded_url = _upload_video_to_supabase(user_id=user_id, local_video_path=video_path)
+            if uploaded_url:
+                LATEST_VIDEO_URL = uploaded_url
+        except Exception as exc:
+            print(f"[WARN][{request_id}] Upload failed: {exc}")
+
+        if graph_url:
+            try:
+                backend_stream_url = f"{base_url.rstrip('/')}/video"
+                supabase.table("Graph_Solution").insert(
+                    {
+                        "user_id": user_id,
+                        "graph_url": graph_url,
+                        "solution": explanation,
+                        "video_link": LATEST_VIDEO_URL or backend_stream_url,
+                    }
+                ).execute()
+            except Exception as exc:
+                print(f"[WARN][{request_id}] Graph_Solution insert failed: {exc}")
+
+        print(f"[DEBUG][{request_id}] Background render complete")
+
+    except Exception as e:
+        print(f"[ERROR][{request_id}] Background job failed: {e}")
+
+
 @app.post("/generate-video-v2")
 async def generate_video_v2(
     request: Request,
@@ -262,86 +299,16 @@ async def generate_video_v2(
 
     print(f"[DEBUG][{request_id}] Initial generated code chars={len(generated_code)}")
 
-    try:
-        video_path = execute_manim_code(generated_code, allow_safe_fallback_scene=False)
-        final_code = generated_code
-        attempts = 1
-    except Exception as first_exc:
-        print(f"[DEBUG][{request_id}] Strict render attempt failed: {first_exc}")
-
-        fix_payload = {
-            "model": MODEL_NAME,
-            "temperature": 0.0,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": (
-                        f"{FIX_CODE_PROMPT}\n\n"
-                        f"Original explanation:\n{explanation}\n\n"
-                        f"Broken code:\n{generated_code}"
-                    )
-                }
-            ]
-        }
-
-        fixed_response = await _call_openrouter(fix_payload, request_id)
-        fixed_code = _extract_openrouter_message_content(fixed_response, request_id)
-        print(f"[DEBUG][{request_id}] Fixed code chars={len(fixed_code)}")
-
-        try:
-            video_path = execute_manim_code(fixed_code, allow_safe_fallback_scene=False)
-            final_code = fixed_code
-            attempts = 2
-        except Exception as second_exc:
-            print(f"[DEBUG][{request_id}] Fix pass render failed: {second_exc}")
-            raise fastapi.HTTPException(
-                status_code=500,
-                detail=f"V2 video generation failed after code-fix retry: {second_exc}",
-            ) from second_exc
-
-    backend_stream_url = f"{str(request.base_url).rstrip('/')}/video"
-    upload_warning = ""
-    LATEST_VIDEO_PATH = video_path
-    LATEST_VIDEO_URL = None
-    try:
-        uploaded_url = _upload_video_to_supabase(user_id=user_id, local_video_path=video_path)
-        if uploaded_url:
-            LATEST_VIDEO_URL = uploaded_url
-        else:
-            upload_warning = "Supabase upload returned empty URL; using backend stream fallback."
-    except Exception as exc:
-        upload_warning = f"Supabase upload failed; using backend stream fallback. {exc}"
-        print(f"[WARN][{request_id}] {upload_warning}")
-
-    print(f"[DEBUG][{request_id}] Video generated at: {video_path}")
-    if LATEST_VIDEO_URL:
-        print(f"[DEBUG][{request_id}] Supabase video URL: {LATEST_VIDEO_URL}")
-    else:
-        print(f"[DEBUG][{request_id}] Using backend stream URL: {backend_stream_url}")
-
-    if graph_url:
-        try:
-            supabase.table("Graph_Solution").insert(
-                {
-                    "user_id": user_id,
-                    "graph_url": graph_url,
-                    "solution": explanation,
-                    "video_link": LATEST_VIDEO_URL or backend_stream_url,
-                }
-            ).execute()
-        except Exception as exc:
-            print(f"[WARN][{request_id}] Graph_Solution insert failed: {exc}")
+    threading.Thread(
+        target=process_video_job,
+        args=(request_id, generated_code, user_id, explanation, graph_url, str(request.base_url)),
+        daemon=True,
+    ).start()
 
     return {
-        "model": MODEL_NAME,
-        "manim_code": final_code,
-        "video_path": video_path,
-        "video_url": LATEST_VIDEO_URL or backend_stream_url,
-        "stream_url": backend_stream_url,
-        "attempts": attempts,
+        "status": "processing",
+        "request_id": request_id,
         "api": "generate-video-v2",
-        "storage": "supabase" if LATEST_VIDEO_URL else "backend-local",
-        "upload_warning": upload_warning,
     }
 
 
