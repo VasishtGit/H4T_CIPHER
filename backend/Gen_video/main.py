@@ -355,11 +355,6 @@ async def generate_video_v2(
     if image is None and not (question_description or "").strip():
         raise fastapi.HTTPException(status_code=400, detail="Provide either image or question_description.")
 
-    image_bytes = b""
-    image_b64 = ""
-    if image is not None:
-        image_bytes = await image.read()
-        image_b64 = base64.b64encode(image_bytes).decode("utf-8")
 
     prompt_text = f"{PROMPT}\n\nQuestion description:\n{question_description}\n\nExplanation:\n{explanation}"
     message_content = [
@@ -368,17 +363,6 @@ async def generate_video_v2(
             "text": prompt_text
         }
     ]
-
-    if image is not None:
-        message_content.append(
-            {
-                "type": "image_url",
-                "image_url": {
-                    "url": f"data:{image.content_type};base64,{image_b64}"
-                }
-            }
-        )
-        
 
     gen_payload = {
         "model": MODEL_NAME,
@@ -390,7 +374,6 @@ async def generate_video_v2(
             }
         ]
     }
-
 
     first_response = await _call_openrouter(gen_payload, request_id)
     generated_code = _extract_openrouter_message_content(first_response, request_id)
