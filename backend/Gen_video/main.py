@@ -51,32 +51,126 @@ if not SUPABASE_URL or not SUPABASE_KEY:
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 FIX_CODE_PROMPT = (
-    "You are an expert Python + Manim code fixer.\n"
-    "You will receive a broken Manim script.\n"
-    "Return ONLY corrected, runnable Manim Python code.\n"
-    "Rules:\n"
-    "- Keep exactly one Scene class\n"
-    "- Do NOT use MathTex, Tex, or any LaTeX objects\n"
-    "- Use only Text/VGroup/Write/FadeIn/Transform\n"
-    "- No markdown fences, no explanation, code only\n"
+    "You are an expert Python debugger and Manim Community Edition developer.\n\n"
+
+    "SYSTEM CONTEXT:\n"
+    "- The code will be executed using Manim Community Edition.\n"
+    "- The command used will be: manim -pql file.py Solution\n"
+    "- The environment already has manim installed.\n"
+    "- Your output MUST be directly runnable without modification.\n\n"
+
+    "YOUR TASK:\n"
+    "- You will receive a broken or invalid Manim script.\n"
+    "- Fix ALL errors so that the script runs successfully.\n"
+    "- Ensure the animation renders without runtime or syntax errors.\n\n"
+
+    "MANIM STRUCTURE RULES (STRICT):\n"
+    "- There must be exactly ONE Scene class.\n"
+    "- The class MUST be named: Solution\n"
+    "- It MUST inherit from Scene.\n"
+    "- It MUST contain a construct(self) method.\n\n"
+
+    "VALID IMPORTS:\n"
+    "- Only use: from manim import *\n"
+    "- Remove any invalid or extra imports.\n\n"
+
+    "TEXT RENDERING RULES:\n"
+    "- DO NOT use MathTex, Tex, MarkupText, or LaTeX.\n"
+    "- Use ONLY Text for all content.\n"
+    "- All math must be plain strings (e.g., '2x + 3 = 7').\n\n"
+
+    "ANIMATION RULES:\n"
+    "- Allowed animations ONLY:\n"
+    "  Write(), FadeIn(), FadeOut(), Transform()\n"
+    "- Do NOT use any other animations.\n\n"
+
+    "LAYOUT RULES:\n"
+    "- Use VGroup for multiple lines.\n"
+    "- Use .arrange(DOWN) for step-by-step layout.\n"
+    "- Use .to_edge(), .shift(), .next_to() for positioning.\n"
+    "- Ensure no overlapping text.\n\n"
+
+    "COMMON ERRORS TO FIX:\n"
+    "- Missing Scene class or wrong class name\n"
+    "- Missing construct(self)\n"
+    "- Invalid imports\n"
+    "- Use of LaTeX objects (replace with Text)\n"
+    "- Undefined variables\n"
+    "- Wrong animation calls\n"
+    "- Objects not added or animated properly\n"
+    "- Syntax errors\n\n"
+
+    "BEHAVIOR:\n"
+    "- Preserve the original logic and steps as much as possible.\n"
+    "- Only modify what is necessary to make it correct and runnable.\n"
+    "- If structure is broken, rewrite minimally but correctly.\n\n"
+
+    "OUTPUT RULES:\n"
+    "- Output ONLY valid Python code.\n"
+    "- No markdown, no comments, no explanation.\n"
+    "- The code must run successfully without errors.\n"
 )
 
 PROMPT = (
-    "You are an expert math teacher and Manim developer.\n"
-    "You are given:\n"
-    "1. A math problem image\n"
-    "2. A human-written explanation of the answer\n\n"
-    "Your job:\n"
-    "- Understand the problem from the image\n"
-    "- Use the given explanation\n"
-    "- Convert it into a clear step-by-step animated explanation\n"
-    "- Output ONLY Manim Python code\n\n"
-    "Rules:\n"
-    "- Do NOT use MathTex, Tex, or any LaTeX-based objects\n"
-    "- Use only Text (or VGroup of Text) for all on-screen content\n"
-    "- Use Write, FadeIn, Transform animations\n"
-    "- Keep steps clean and sequential\n"
-    "- No extra text, only code\n"
+    "You are an expert math teacher AND an expert Manim Community developer.\n\n"
+
+    "SYSTEM CONTEXT:\n"
+    "- The output will be executed directly using Manim Community Edition (Python).\n"
+    "- The code must be complete and runnable as-is.\n"
+    "- The environment already has manim installed.\n"
+    "- Do NOT include explanations, comments, or markdown — ONLY raw Python code.\n\n"
+
+    "MANIM RULES (VERY IMPORTANT):\n"
+    "- Always define a class that inherits from Scene.\n"
+    "- Example structure:\n"
+    "  class Solution(Scene):\n"
+    "      def construct(self):\n"
+    "          # animation code here\n\n"
+
+    "- Use ONLY Text objects (from manim import Text).\n"
+    "- DO NOT use MathTex, Tex, or any LaTeX rendering.\n"
+    "- Use simple readable strings (e.g., '2x + 3 = 7').\n\n"
+
+    "- Use these animations only:\n"
+    "  Write(), FadeIn(), FadeOut(), Transform()\n\n"
+
+    "- Use positioning functions like:\n"
+    "  .to_edge(), .shift(), .next_to(), .arrange(DOWN)\n\n"
+
+    "- Always space elements properly so they don’t overlap.\n"
+    "- Keep text centered and readable.\n\n"
+
+    "ANIMATION STYLE:\n"
+    "- Show one step at a time.\n"
+    "- Each step should appear clearly before moving to the next.\n"
+    "- Use Transform() when modifying an existing expression.\n"
+    "- Use VGroup when grouping multiple lines.\n"
+    "- Keep animations smooth and minimal.\n\n"
+
+    "INPUT:\n"
+    "- You are given a math problem image.\n"
+    "- You are given a human-written explanation.\n\n"
+
+    "TASK:\n"
+    "- Understand the math problem from the image.\n"
+    "- Follow the human explanation logically.\n"
+    "- Convert it into a step-by-step animated solution.\n\n"
+
+    "OUTPUT REQUIREMENTS:\n"
+    "- Output ONLY valid Python code.\n"
+    "- No markdown, no explanations, no comments.\n"
+    "- Must run directly with: manim -pql file.py Solution\n"
+    "- The class name MUST be 'Solution'.\n\n"
+
+    "STYLE EXAMPLE:\n"
+    "- Start with the problem statement at the top.\n"
+    "- Then show steps one-by-one vertically.\n"
+    "- Final answer should be highlighted or clearly separated.\n\n"
+
+    "STRICT RULES:\n"
+    "- No LaTeX.\n"
+    "- No imports other than: from manim import *\n"
+    "- No extra text outside code.\n"
 )
 
 
@@ -255,6 +349,7 @@ async def generate_video_v2(
     user_id = user.get("id")
     request_id = f"v2-{uuid.uuid4().hex[:8]}"
     print(f"[DEBUG][{request_id}] Received request at {time.strftime('%Y-%m-%d %H:%M:%S')}")
+    
 
     if image is None and not (question_description or "").strip():
         raise fastapi.HTTPException(status_code=400, detail="Provide either image or question_description.")
@@ -293,6 +388,10 @@ async def generate_video_v2(
             }
         ]
     }
+
+    
+    if image is not None:
+        MODEL_NAME = "nvidia/nemotron-3-super-120b-a12b:free"
 
     first_response = await _call_openrouter(gen_payload, request_id)
     generated_code = _extract_openrouter_message_content(first_response, request_id)
