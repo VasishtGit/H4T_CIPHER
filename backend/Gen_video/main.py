@@ -185,7 +185,7 @@ def _openrouter_headers() -> dict:
 
 
 async def _call_openrouter(payload: dict, request_id: str):
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=60.0) as client:
         print(f"[DEBUG][{request_id}] Sending request to OpenRouter at {time.strftime('%Y-%m-%d %H:%M:%S')}")
         res = await client.post(OPENROUTER_URL, headers=_openrouter_headers(), json=payload)
         print(f"[DEBUG][{request_id}] Received OpenRouter response at {time.strftime('%Y-%m-%d %H:%M:%S')}")
