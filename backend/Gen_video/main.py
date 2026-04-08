@@ -390,7 +390,7 @@ async def generate_video_v2(
     }
 
     
-    if image is not None:
+    if image is None:
         MODEL_NAME = "nvidia/nemotron-3-super-120b-a12b:free"
 
     first_response = await _call_openrouter(gen_payload, request_id)
