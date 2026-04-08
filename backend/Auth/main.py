@@ -1,4 +1,5 @@
 import os
+import time
 from typing import Any
 
 import fastapi
@@ -175,6 +176,11 @@ def me(request: fastapi.Request):
         raise fastapi.HTTPException(status_code=401, detail=f"Invalid session: {exc}") from exc
 
     return {"user": _user_payload(user)}
+
+
+@app.get("/")
+async def root():
+    return {"message": time.strftime("Hello! The server is up and running at %Y-%m-%d %H:%M:%S")}
 
 @app.get("/health")
 async def health_check():

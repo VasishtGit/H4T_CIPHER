@@ -2,7 +2,7 @@ import asyncio
 import base64
 import os
 import uuid
-from datetime import datetime
+from datetime import datetime, time
 from pathlib import Path
 from typing import Any
 
@@ -310,6 +310,10 @@ async def upload_image(request: Request, image: UploadFile = File(...)):
         "graph_url": graph_url,
         "user_id": user_id,
     }
+
+@app.get("/")
+async def root():
+    return {"message": time.strftime("Hello! The server is up and running at %Y-%m-%d %H:%M:%S")}
 
 @app.get("/health")
 async def health_check():
