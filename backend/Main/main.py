@@ -311,7 +311,7 @@ async def upload_image(request: Request, image: UploadFile = File(...)):
         "user_id": user_id,
     }
 
-@app.get("/health")
+@app.get("/health", methods=["GET", "HEAD"])
 async def health_check():
     return {
         "status": "ok",

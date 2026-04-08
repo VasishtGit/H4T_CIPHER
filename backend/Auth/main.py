@@ -176,7 +176,7 @@ def me(request: fastapi.Request):
 
     return {"user": _user_payload(user)}
 
-@app.get("/health")
+@app.get("/health", methods=["GET", "HEAD"])
 async def health_check():
     return {
         "status": "ok",
