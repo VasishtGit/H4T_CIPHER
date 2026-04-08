@@ -299,12 +299,25 @@ async def generate_video_v2(
                 detail=f"V2 video generation failed after code-fix retry: {second_exc}",
             ) from second_exc
 
+    backend_stream_url = f"{str(request.base_url).rstrip('/')}/video"
+    upload_warning = ""
     LATEST_VIDEO_PATH = video_path
-    LATEST_VIDEO_URL = _upload_video_to_supabase(user_id=user_id, local_video_path=video_path)
-    if not LATEST_VIDEO_URL:
-        raise fastapi.HTTPException(status_code=500, detail="Video upload returned empty Supabase URL.")
+    LATEST_VIDEO_URL = None
+    try:
+        uploaded_url = _upload_video_to_supabase(user_id=user_id, local_video_path=video_path)
+        if uploaded_url:
+            LATEST_VIDEO_URL = uploaded_url
+        else:
+            upload_warning = "Supabase upload returned empty URL; using backend stream fallback."
+    except Exception as exc:
+        upload_warning = f"Supabase upload failed; using backend stream fallback. {exc}"
+        print(f"[WARN][{request_id}] {upload_warning}")
+
     print(f"[DEBUG][{request_id}] Video generated at: {video_path}")
-    print(f"[DEBUG][{request_id}] Supabase video URL: {LATEST_VIDEO_URL}")
+    if LATEST_VIDEO_URL:
+        print(f"[DEBUG][{request_id}] Supabase video URL: {LATEST_VIDEO_URL}")
+    else:
+        print(f"[DEBUG][{request_id}] Using backend stream URL: {backend_stream_url}")
 
     if graph_url:
         try:
@@ -313,7 +326,7 @@ async def generate_video_v2(
                     "user_id": user_id,
                     "graph_url": graph_url,
                     "solution": explanation,
-                    "video_link": LATEST_VIDEO_URL,
+                    "video_link": LATEST_VIDEO_URL or backend_stream_url,
                 }
             ).execute()
         except Exception as exc:
@@ -323,10 +336,12 @@ async def generate_video_v2(
         "model": MODEL_NAME,
         "manim_code": final_code,
         "video_path": video_path,
-        "video_url": LATEST_VIDEO_URL,
-        "stream_url": "http://localhost:8001/video",
+        "video_url": LATEST_VIDEO_URL or backend_stream_url,
+        "stream_url": backend_stream_url,
         "attempts": attempts,
-        "api": "generate-video-v2"
+        "api": "generate-video-v2",
+        "storage": "supabase" if LATEST_VIDEO_URL else "backend-local",
+        "upload_warning": upload_warning,
     }
 
 
